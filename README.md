@@ -4,11 +4,57 @@ Private, versioned Oxlint and Oxfmt policy published as
 `@preambient/code-rules` to GitHub Packages. This repository owns the settings;
 application repositories import a pinned release.
 
-Version 0.1.0 preserves the application's current lint rules. Formatting uses
-semicolons, double quotes for ordinary strings, trailing commas, and an 80-column
-width. Use template literals for interpolation and multiline content. New naming,
-TSDoc, type-safety, and import-order policies require a separate tested release and
-an application migration.
+Version 0.2.0 adds alphabetical sorting and separate runtime presets. Formatting
+uses semicolons, double quotes for ordinary strings, trailing commas, and an
+80-column width. Use template literals for interpolation and multiline content.
+Naming, TSDoc, and additional type-safety policies require a separate release.
+
+## Profiles
+
+| Import                                     | Purpose                                                                       |
+| ------------------------------------------ | ----------------------------------------------------------------------------- |
+| `@preambient/code-rules/base`              | Shared TypeScript/import correctness and alphabetical sorting                 |
+| `@preambient/code-rules/frontend`          | Base plus native React and JSX accessibility rules and JSX prop sorting       |
+| `@preambient/code-rules/react`             | Alias of the frontend preset                                                  |
+| `@preambient/code-rules/backend`           | Base plus native Node rules and no console logging                            |
+| `@preambient/code-rules/oxlint/preambient` | Directory-based composition, including shadcn rules and UI-package exceptions |
+| `@preambient/code-rules/oxfmt`             | Shared formatting                                                             |
+| `@preambient/code-rules/oxfmt/preambient`  | Formatting with monorepo generated/vendor exclusions                          |
+
+The monorepo preset applies frontend rules to `frontend/**` and `internal/apps/**`,
+backend rules to `backend/**`, and shared rules to the remaining code. Next.js
+server and client modules both use the React profile; package-boundary checks
+still enforce browser/backend ownership.
+
+## Alphabetical sorting
+
+All 23 Perfectionist sorting categories are covered: imports and their named
+members/attributes, exports and their named members/attributes, interfaces,
+object types, objects, unions, intersections, heritage clauses, JSX props, classes,
+modules, enums, variables, switch cases, decorators, maps, sets, array membership
+lists, and explicitly selected arrays.
+
+Oxlint's native `sort-imports` handles named members. The remaining categories run
+through pinned `eslint-plugin-perfectionist` inside Oxlint's JS plugin API; there
+is no separate ESLint command or configuration. Oxfmt does not sort imports, so
+formatting and linting do not compete. Imports use one alphabetical group and do
+not alphabetize bare side-effect imports. The plugin's import sorter can still
+move bound imports across side-effect imports, so declaration sorting requires
+review.
+
+`lint:fix` applies only the automatic fixes exposed by this package. Rewrites that
+can change evaluation, iteration, or overload order are exposed as suggestions:
+imports, re-exports, intersections, arrays, membership lists, objects, classes,
+modules, variables, enums, decorators, maps, sets, switch cases, and JSX props.
+Review suggestions in the editor, or review a scoped diff before explicitly using
+Oxlint's `--fix-suggestions`. Some nested fixes require additional passes.
+Intentional order should have a narrow `oxlint-disable` comment explaining why.
+
+Ordinary positional arrays retain their order. Only directly initialized arrays
+whose variable name starts with `SORTED_` opt into array sorting. Upstream
+Perfectionist 5.12.1 checks attributes on named re-exports; export-star attributes
+are not covered. The adapter and compatibility tests pin that behavior rather
+than claiming unsupported syntax is enforced.
 
 ## Install in the Preambient application
 
@@ -26,7 +72,7 @@ an application migration.
    access to the private package. Keep it in an ignored `.env.local` file or your
    secret manager; never commit it. GitHub Actions should use its job token with
    `packages: read` instead of a personal token.
-4. Install an exact release: `bun add --dev --exact @preambient/code-rules@0.1.1`.
+4. Install an exact release: `bun add --dev --exact @preambient/code-rules@0.2.0`.
 5. Replace the existing root Oxc JSON configs with the two wrappers below, or run
    `bunx --no-install preambient-code-rules init` after removing the old configs.
    Initialization refuses to overwrite existing configuration.
@@ -64,8 +110,8 @@ relax rules. The editor reads the same wrappers. `verify` checks wrappers withou
 running tools; `check` runs lint and formatting checks; `lint:fix` applies safe
 lint fixes. Oxc's ordinary inline suppression mechanisms remain available.
 
-For other repositories, generic configs are exported at
-`@preambient/code-rules/oxlint` and `@preambient/code-rules/oxfmt`. The CLI currently
+For other repositories, select `base`, `frontend`/`react`, or `backend` and the
+shared formatter. `oxlint` is also an alias for the base preset. The CLI currently
 expects the Preambient monorepo wrappers; use the native tools with generic presets.
 
 ## Build authentication
@@ -117,7 +163,7 @@ For a release, update `package.json` and `CHANGELOG.md`, run `bun run check` and
 `bash scripts/test-package.sh`, commit and push to `main`, then run:
 
 ```sh
-gh workflow run release.yml --repo preambient/code-rules --ref main -f version=0.1.1
+gh workflow run release.yml --repo preambient/code-rules --ref main -f version=0.2.0
 ```
 
 A new policy requires a new version; never replace an existing published version.

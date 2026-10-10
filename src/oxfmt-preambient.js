@@ -1,5 +1,5 @@
-import { defineConfig } from "oxfmt";
 import base from "./oxfmt.js";
+import { defineConfig } from "oxfmt";
 
 export default defineConfig({
   ...base,

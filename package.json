@@ -1,6 +1,6 @@
 {
   "name": "@preambient/code-rules",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Shared Oxlint and Oxfmt policy for Preambient repositories",
   "license": "UNLICENSED",
   "type": "module",
@@ -36,7 +36,23 @@
       "types": "./src/oxfmt.d.ts",
       "default": "./src/oxfmt-preambient.js"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./base": {
+      "types": "./src/oxlint.d.ts",
+      "default": "./src/oxlint.js"
+    },
+    "./frontend": {
+      "types": "./src/oxlint.d.ts",
+      "default": "./src/oxlint-frontend.js"
+    },
+    "./react": {
+      "types": "./src/oxlint.d.ts",
+      "default": "./src/oxlint-frontend.js"
+    },
+    "./backend": {
+      "types": "./src/oxlint.d.ts",
+      "default": "./src/oxlint-backend.js"
+    }
   },
   "bin": {
     "preambient-code-rules": "src/cli.js"
@@ -51,6 +67,7 @@
   },
   "dependencies": {
     "@shadcn/lint": "0.2.0",
+    "eslint-plugin-perfectionist": "5.12.1",
     "oxfmt": "0.72.0",
     "oxlint": "1.86.0"
   }

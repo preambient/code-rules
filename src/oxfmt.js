@@ -1,11 +1,6 @@
 import { defineConfig } from "oxfmt";
 
 export default defineConfig({
-  semi: true,
-  singleQuote: false,
-  trailingComma: "all",
-  printWidth: 80,
-  sortPackageJson: false,
   ignorePatterns: [
     "bun.lock",
     "skills-lock.json",
@@ -20,4 +15,9 @@ export default defineConfig({
     "next-env.d.ts",
     "storybook-static/",
   ],
+  printWidth: 80,
+  semi: true,
+  singleQuote: false,
+  sortPackageJson: false,
+  trailingComma: "all",
 });

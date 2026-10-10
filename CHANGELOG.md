@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0
+
+- Add base, frontend/React, backend, and composed monorepo presets.
+- Cover all 23 Perfectionist sorting categories through Oxlint.
+- Require review for fixes that can change runtime or overload order.
+- Add compatibility and non-reordering regression tests.
+
 ## 0.1.1
 
 - Normalize npm CLI metadata and verify installation from the published registry.

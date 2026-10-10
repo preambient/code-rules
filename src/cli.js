@@ -6,10 +6,10 @@ import { dirname, resolve } from "node:path";
 
 const require = createRequire(import.meta.url);
 const wrappers = {
-  "oxlint.config.mts":
-    'export { default } from "@preambient/code-rules/oxlint/preambient";\n',
   "oxfmt.config.mts":
     'export { default } from "@preambient/code-rules/oxfmt/preambient";\n',
+  "oxlint.config.mts":
+    'export { default } from "@preambient/code-rules/oxlint/preambient";\n',
 };
 const conflicts = [
   ".oxlintrc.json",
@@ -19,6 +19,20 @@ const conflicts = [
   ".oxfmtrc.jsonc",
   "oxfmt.config.ts",
 ];
+
+/** Run the package's pinned tool with the verified root configuration. */
+function run(tool, args) {
+  const manifestPath = require.resolve(`${tool}/package.json`);
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+  const binary = resolve(dirname(manifestPath), manifest.bin[tool]);
+  const result = spawnSync(
+    process.execPath,
+    [binary, "--config", `${tool}.config.mts`, ...args],
+    { stdio: "inherit" },
+  );
+  if (result.error) throw result.error;
+  if (result.status !== 0) process.exit(result.status ?? 1);
+}
 
 /** Verify that editor and CLI configuration delegates to the published policy. */
 function verify() {
@@ -34,20 +48,6 @@ function verify() {
       throw new Error(`${file} must contain exactly:\n${content}`);
     }
   }
-}
-
-/** Run the package's pinned tool with the verified root configuration. */
-function run(tool, args) {
-  const manifestPath = require.resolve(`${tool}/package.json`);
-  const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-  const binary = resolve(dirname(manifestPath), manifest.bin[tool]);
-  const result = spawnSync(
-    process.execPath,
-    [binary, "--config", `${tool}.config.mts`, ...args],
-    { stdio: "inherit" },
-  );
-  if (result.error) throw result.error;
-  if (result.status !== 0) process.exit(result.status ?? 1);
 }
 
 try {
@@ -76,13 +76,13 @@ try {
       writeFileSync(file, content, { flag: "wx" });
   }
   verify();
-  if (["lint", "lint:fix", "check"].includes(command)) {
+  if (["check", "lint", "lint:fix"].includes(command)) {
     run("oxlint", [
       "--deny-warnings",
       ...(command === "lint:fix" ? ["--fix"] : []),
     ]);
   }
-  if (["format", "format:check", "check"].includes(command)) {
+  if (["check", "format", "format:check"].includes(command)) {
     run("oxfmt", [command === "format" ? "--write" : "--check"]);
   }
 } catch (error) {
