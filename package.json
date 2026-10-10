@@ -1,0 +1,57 @@
+{
+  "name": "@preambient/code-rules",
+  "version": "0.1.0",
+  "description": "Shared Oxlint and Oxfmt policy for Preambient repositories",
+  "license": "UNLICENSED",
+  "type": "module",
+  "packageManager": "bun@1.3.6",
+  "engines": {
+    "node": ">=24"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/preambient/code-rules.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "exports": {
+    "./oxlint": {
+      "types": "./src/oxlint.d.ts",
+      "default": "./src/oxlint.js"
+    },
+    "./oxlint/preambient": {
+      "types": "./src/oxlint.d.ts",
+      "default": "./src/oxlint-preambient.js"
+    },
+    "./oxfmt": {
+      "types": "./src/oxfmt.d.ts",
+      "default": "./src/oxfmt.js"
+    },
+    "./oxfmt/preambient": {
+      "types": "./src/oxfmt.d.ts",
+      "default": "./src/oxfmt-preambient.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "preambient-code-rules": "./src/cli.js"
+  },
+  "scripts": {
+    "lint": "oxlint --deny-warnings",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "test": "node --test",
+    "check": "bun run lint && bun run format:check && bun run test",
+    "prepublishOnly": "bun run check"
+  },
+  "dependencies": {
+    "@shadcn/lint": "0.2.0",
+    "oxfmt": "0.72.0",
+    "oxlint": "1.86.0"
+  }
+}

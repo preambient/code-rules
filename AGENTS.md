@@ -1,0 +1,14 @@
+# Code rules ownership
+
+This repository owns Preambient's shared Oxlint and Oxfmt policies.
+
+- Keep the generic presets free of application-specific paths; put monorepo
+  exceptions in the `preambient` presets.
+- Use double quotes for ordinary strings, semicolons, and template literals for
+  interpolation or multiline content.
+- A policy or tool-version change is a versioned release. Update the changelog and
+  test both permitted and rejected examples before releasing.
+- Run `bun run check` and verify the packed package before publishing.
+- Publish only through the Release workflow on `main`. Never publish to npmjs.org.
+- Never commit registry tokens, package tarballs, or generated output.
+- Only the coordinator commits, pushes, and releases integrated changes.
