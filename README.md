@@ -26,7 +26,7 @@ an application migration.
    access to the private package. Keep it in an ignored `.env.local` file or your
    secret manager; never commit it. GitHub Actions should use its job token with
    `packages: read` instead of a personal token.
-4. Install an exact release: `bun add --dev --exact @preambient/code-rules@0.1.0`.
+4. Install an exact release: `bun add --dev --exact @preambient/code-rules@0.1.1`.
 5. Replace the existing root Oxc JSON configs with the two wrappers below, or run
    `bunx --no-install preambient-code-rules init` after removing the old configs.
    Initialization refuses to overwrite existing configuration.
@@ -117,7 +117,7 @@ For a release, update `package.json` and `CHANGELOG.md`, run `bun run check` and
 `bash scripts/test-package.sh`, commit and push to `main`, then run:
 
 ```sh
-gh workflow run release.yml --repo preambient/code-rules --ref main -f version=0.1.0
+gh workflow run release.yml --repo preambient/code-rules --ref main -f version=0.1.1
 ```
 
 A new policy requires a new version; never replace an existing published version.

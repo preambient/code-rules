@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1
+
+- Normalize npm CLI metadata and verify installation from the published registry.
+
 ## 0.1.0
 
 - Extract the existing Preambient Oxlint and Oxfmt policy into a private package.

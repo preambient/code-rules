@@ -8,5 +8,6 @@ mkdir "$package_tmp/consumer"
 cd "$package_tmp/consumer"
 printf '%s\n' '{"private":true}' > package.json
 bun add --exact "$package_tmp"/*.tgz
+test -x node_modules/.bin/preambient-code-rules
 CODE_RULES_PACKAGE_ROOT="$package_tmp/consumer/node_modules/@preambient/code-rules" \
   node --test "$package_root/test/policy.test.js"

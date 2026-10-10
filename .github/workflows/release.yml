@@ -40,3 +40,9 @@ jobs:
         run: npm publish --ignore-scripts
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify published package and private visibility
+        run: |
+          bash scripts/test-published.sh
+          test "$(gh api /orgs/preambient/packages/npm/code-rules --jq .visibility)" = private
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
