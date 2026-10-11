@@ -37,5 +37,6 @@ export default defineConfig({
         ],
       },
     ],
+    "typescript/consistent-type-definitions": ["error", "type"],
   },
 });

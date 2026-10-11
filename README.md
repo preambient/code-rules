@@ -177,3 +177,9 @@ publishing. Privacy is controlled by GitHub repository/package permissions.
 - [Protected branch availability](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches)
 - [Oxlint configuration](https://oxc.rs/docs/guide/usage/linter/config)
 - [Oxfmt configuration](https://oxc.rs/docs/guide/usage/formatter/config)
+
+### Type definitions
+
+Use `type` aliases instead of `interface` declarations. Every preset enforces
+`typescript/consistent-type-definitions: ["error", "type"]`. Convert inheritance
+to intersections after reviewing member compatibility and declaration merging.

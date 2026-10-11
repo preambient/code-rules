@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.0
+
+- Require TypeScript type aliases instead of interfaces in every preset.
+- Test accepted aliases and rejected interfaces in frontend, backend, and shared code.
+
 ## 0.3.1
 
 - Exclude Next.js-generated `next-env.d.ts` declarations from linting; handwritten

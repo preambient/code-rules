@@ -249,3 +249,23 @@ test("mixed imports, re-exports, and callable intersections require review", (t)
     assert.ok((result.stdout + result.stderr).includes(rule));
   }
 });
+
+test("type aliases are required in frontend, backend, and shared code", (t) => {
+  const fixture = consumer(t);
+  for (const file of [
+    "frontend/example.ts",
+    "backend/example.ts",
+    "shared/example.ts",
+  ]) {
+    fixture.write(file, "export interface Example { value: string; }\n");
+    const rejected = fixture.run("lint");
+    assert.notEqual(rejected.status, 0);
+    assert.match(
+      rejected.stdout + rejected.stderr,
+      /consistent-type-definitions/,
+    );
+    fixture.write(file, "export type Example = { value: string; };\n");
+    const accepted = fixture.run("lint");
+    assert.equal(accepted.status, 0, accepted.stdout + accepted.stderr);
+  }
+});
