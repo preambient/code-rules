@@ -11,6 +11,7 @@ import { dirname, join } from "node:path";
 import { test } from "node:test";
 
 const require = createRequire(import.meta.url);
+
 const binary = join(
   dirname(require.resolve("oxlint/package.json")),
   "bin/oxlint",
@@ -22,9 +23,13 @@ const binary = join(
  */
 function importFixture(t) {
   const directory = mkdtempSync(join(tmpdir(), "preambient-imports-"));
+
   t.after(() => rmSync(directory, { force: true, recursive: true }));
+
   const config = join(directory, ".oxlintrc.json");
+
   const source = join(directory, "example.ts");
+
   writeFileSync(
     config,
     JSON.stringify({
@@ -48,6 +53,7 @@ function importFixture(t) {
 
 test("every runtime preset inherits the same-directory import policy", () => {
   const rule = base.rules["no-restricted-imports"];
+
   assert.equal(rule[0], "error");
   for (const preset of [backend, frontend, preambient]) {
     assert.deepEqual(preset.rules["no-restricted-imports"], rule);
@@ -61,6 +67,7 @@ test("every runtime preset inherits the same-directory import policy", () => {
 
 test("same-directory files, aliases, and package exports remain allowed", (t) => {
   const lint = importFixture(t);
+
   for (const path of [
     "./queries",
     "./queries.js",
@@ -70,12 +77,14 @@ test("same-directory files, aliases, and package exports remain allowed", (t) =>
     "node:fs",
   ]) {
     const result = lint(`export * from "${path}";`);
+
     assert.equal(result.status, 0, result.stdout + result.stderr);
   }
 });
 
 test("parent and child directory imports fail with an actionable message", (t) => {
   const lint = importFixture(t);
+
   for (const path of [
     "../queries",
     "../../src/queries",
@@ -86,6 +95,7 @@ test("parent and child directory imports fail with an actionable message", (t) =
     "./",
   ]) {
     const result = lint(`import "${path}";`);
+
     assert.equal(result.status, 1, result.stdout + result.stderr);
     assert.match(result.stdout + result.stderr, /no-restricted-imports/);
     assert.match(result.stdout + result.stderr, /package export or an alias/);
@@ -94,6 +104,7 @@ test("parent and child directory imports fail with an actionable message", (t) =
 
 test("type imports, re-exports, and literal dynamic imports cannot bypass the policy", (t) => {
   const lint = importFixture(t);
+
   for (const source of [
     'import type { Query } from "../queries"; export type Value = Query;',
     'export type { Query } from "../queries";',
@@ -103,6 +114,7 @@ test("type imports, re-exports, and literal dynamic imports cannot bypass the po
     'export const load = () => import("./src/queries");',
   ]) {
     const result = lint(source);
+
     assert.equal(result.status, 1, result.stdout + result.stderr);
     assert.match(result.stdout + result.stderr, /no-restricted-imports/);
   }
@@ -116,5 +128,14 @@ test("every runtime preset inherits the full JSDoc contract", () => {
       }
     }
     assert.deepEqual(preset.settings.jsdoc, base.settings.jsdoc);
+  }
+});
+
+test("every runtime preset inherits declaration spacing", () => {
+  const name = "stylistic/padding-line-between-statements";
+
+  for (const preset of [backend, frontend, preambient]) {
+    assert.deepEqual(preset.rules[name], base.rules[name]);
+    assert.ok(preset.jsPlugins.some((plugin) => plugin.name === "stylistic"));
   }
 });

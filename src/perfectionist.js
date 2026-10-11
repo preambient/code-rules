@@ -38,6 +38,7 @@ function withReviewedFixes(rule) {
            */
           value(descriptor) {
             const { fix, suggest = [], ...diagnostic } = descriptor;
+
             context.report({
               ...diagnostic,
               ...(fix
@@ -52,6 +53,7 @@ function withReviewedFixes(rule) {
           },
         },
       });
+
       return rule.create(guarded);
     },
     meta: {

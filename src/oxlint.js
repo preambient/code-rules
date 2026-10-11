@@ -1,4 +1,5 @@
 import { alphabeticalRules } from "./alphabetical.js";
+import { spacingRules } from "./spacing-rules.js";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "oxlint";
 
@@ -25,10 +26,15 @@ export default defineConfig({
       name: "perfectionist",
       specifier: fileURLToPath(new URL("./perfectionist.js", import.meta.url)),
     },
+    {
+      name: "stylistic",
+      specifier: fileURLToPath(new URL("./spacing.js", import.meta.url)),
+    },
   ],
   plugins: ["typescript", "import"],
   rules: {
     ...alphabeticalRules,
+    ...spacingRules,
     "jsdoc-js/check-param-names": ["error", { checkDestructured: false }],
     "jsdoc-js/check-syntax": "error",
     "jsdoc-js/check-tag-names": "error",

@@ -5,12 +5,14 @@ import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 
 const require = createRequire(import.meta.url);
+
 const wrappers = {
   "oxfmt.config.mts":
     'export { default } from "@preambient/code-rules/oxfmt/preambient";\n',
   "oxlint.config.mts":
     'export { default } from "@preambient/code-rules/oxlint/preambient";\n',
 };
+
 const conflicts = [
   ".oxlintrc.json",
   ".oxlintrc.jsonc",
@@ -26,13 +28,17 @@ const conflicts = [
  */
 function run(tool, args) {
   const manifestPath = require.resolve(`${tool}/package.json`);
+
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+
   const binary = resolve(dirname(manifestPath), manifest.bin[tool]);
+
   const result = spawnSync(
     process.execPath,
     [binary, "--config", `${tool}.config.mts`, ...args],
     { stdio: "inherit" },
   );
+
   if (result.error) throw result.error;
   if (result.status !== 0) process.exit(result.status ?? 1);
 }
@@ -55,6 +61,7 @@ function verify() {
 
 try {
   const [command, ...extra] = process.argv.slice(2);
+
   const commands = [
     "init",
     "verify",
@@ -64,6 +71,7 @@ try {
     "format:check",
     "check",
   ];
+
   if (!commands.includes(command) || extra.length > 0) {
     throw new Error(`Usage: preambient-code-rules <${commands.join("|")}>`);
   }

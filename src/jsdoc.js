@@ -4,7 +4,9 @@ import jsdoc from "eslint-plugin-jsdoc";
 // function bodies or arbitrary calls such as array.map(callback).
 function publicImplementations(program) {
   const bindings = new Map();
+
   const implementations = new Set();
+
   const visited = new Set();
 
   // Destructuring stores a selected path rather than exposing the whole initializer.
@@ -27,7 +29,9 @@ function publicImplementations(program) {
           continue;
         }
         if (property.type !== "Property") continue;
+
         const key = propertyKey(property);
+
         if (key !== undefined)
           bindPattern(property.value, {
             key,
@@ -71,6 +75,7 @@ function publicImplementations(program) {
 
   function propertyKey(node) {
     const key = node.type === "MemberExpression" ? node.property : node.key;
+
     if (!node.computed && key?.type === "Identifier") return key.name;
     if (
       key?.type === "Literal" &&
@@ -83,7 +88,9 @@ function publicImplementations(program) {
   // Resolve known own properties without evaluating getters, calls, or bodies.
   function select(node, key, seen = new Map()) {
     if (!node) return [];
+
     const keys = seen.get(node) ?? new Set();
+
     if (keys.has(key)) return [];
     keys.add(key);
     seen.set(node, keys);
@@ -120,6 +127,7 @@ function publicImplementations(program) {
         ];
       case "MemberExpression": {
         const selectedKey = propertyKey(node);
+
         return selectedKey === undefined
           ? []
           : select(node.object, selectedKey, seen).flatMap((value) =>
@@ -130,6 +138,7 @@ function publicImplementations(program) {
         for (const property of [...node.properties].reverse()) {
           if (property.type === "SpreadElement") {
             const values = select(property.argument, key, seen);
+
             if (values.length) return values;
           } else if (propertyKey(property) === key) {
             return property.kind === "get" || property.kind === "set"
@@ -199,6 +208,7 @@ function publicImplementations(program) {
         break;
       case "MemberExpression": {
         const key = propertyKey(node);
+
         if (key !== undefined)
           for (const value of select(node.object, key)) visit(value);
         break;
@@ -294,6 +304,7 @@ export default {
        */
       create(context) {
         const exposed = publicImplementations(context.sourceCode.ast);
+
         const guarded = Object.create(context, {
           report: {
             value(descriptor) {
@@ -301,6 +312,7 @@ export default {
             },
           },
         });
+
         return requireJsdoc.create(guarded);
       },
     },

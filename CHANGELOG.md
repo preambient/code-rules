@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.0
+
+- Require a blank line around variable and function declarations, including
+  exported declarations and functions assigned to `const`, in every preset.
+- Keep imports contiguous with a blank line before the following code; preserve
+  attached JSDoc, compact overload signatures, loop headers, and inline callbacks.
+- Run the pinned Stylistic spacing rule through Oxlint with safe whitespace fixes;
+  verify compatibility with Oxfmt in source, packed, and published consumers.
+
 ## 0.6.0
 
 - Require JSDoc on exported functions and public methods rather than every

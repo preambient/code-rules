@@ -57,6 +57,22 @@ Perfectionist 5.12.1 checks attributes on named re-exports; export-star attribut
 are not covered. The adapter and compatibility tests pin that behavior rather
 than claiming unsupported syntax is enforced.
 
+## Blank lines
+
+Every preset requires at least one blank line before and after standalone
+`const`, `let`, `var`, `using`, and function declarations, including exports and
+nested declarations. `const handler = () => ...` follows the same rule as other
+variables. Adjacent imports stay together, with a blank line separating the
+import block from other code. Overload signatures stay with their implementation.
+Loop headers, object properties, and inline callbacks are not separate statements
+and do not receive extra padding.
+
+The pinned `@stylistic/eslint-plugin` spacing rule runs inside Oxlint; no separate
+ESLint command is needed. Run `bun run lint:fix` to insert missing blank lines,
+then `bun run format` to normalize formatting. Oxfmt preserves the blank lines,
+and CI lint rejects missing spacing. Fixes preserve declaration order and attached
+comments, including JSDoc.
+
 ## Install in the Preambient application
 
 1. Give the application repository **Read** access under the package's
@@ -73,7 +89,7 @@ than claiming unsupported syntax is enforced.
    access to the private package. Keep it in an ignored `.env.local` file or your
    secret manager; never commit it. GitHub Actions should use its job token with
    `packages: read` instead of a personal token.
-4. Install an exact release: `bun add --dev --exact @preambient/code-rules@0.2.0`.
+4. Install an exact release: `bun add --dev --exact @preambient/code-rules@0.7.0`.
 5. Replace the existing root Oxc JSON configs with the two wrappers below, or run
    `bunx --no-install preambient-code-rules init` after removing the old configs.
    Initialization refuses to overwrite existing configuration.

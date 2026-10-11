@@ -1,6 +1,6 @@
 {
   "name": "@preambient/code-rules",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Shared Oxlint and Oxfmt policy for Preambient repositories",
   "license": "UNLICENSED",
   "type": "module",
@@ -67,6 +67,7 @@
   },
   "dependencies": {
     "@shadcn/lint": "0.2.0",
+    "@stylistic/eslint-plugin": "5.10.0",
     "eslint-plugin-jsdoc": "65.2.4",
     "eslint-plugin-perfectionist": "5.12.1",
     "oxfmt": "0.72.0",
