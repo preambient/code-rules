@@ -1,1 +1,1 @@
-export { default } from "./src/oxfmt.js";
+export { default } from "@preambient/code-rules/oxfmt";

@@ -22,5 +22,19 @@ export default defineConfig({
     },
   ],
   plugins: ["typescript", "import"],
-  rules: alphabeticalRules,
+  rules: {
+    ...alphabeticalRules,
+    "no-restricted-imports": [
+      "error",
+      {
+        patterns: [
+          {
+            message:
+              "Relative imports must reference a file in the same directory. Use a package export or an alias for other directories.",
+            regex: "^(?:\\.\\.(?:/|$)|\\./(?:.*/|$))",
+          },
+        ],
+      },
+    ],
+  },
 });

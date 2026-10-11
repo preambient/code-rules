@@ -1,1 +1,1 @@
-export { default } from "./src/oxlint.js";
+export { default } from "@preambient/code-rules/base";

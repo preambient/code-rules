@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.0
+
+- Restrict relative imports to files in the same directory across all presets;
+  require package exports or aliases for parent and child directories.
+
 ## 0.2.0
 
 - Add base, frontend/React, backend, and composed monorepo presets.
