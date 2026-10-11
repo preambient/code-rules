@@ -91,6 +91,18 @@ test("formatter exclusions are relative to the consumer root", (t) => {
   assert.equal(result.status, 0, result.stdout + result.stderr);
 });
 
+test("generated Next.js declarations are excluded but handwritten imports are checked", (t) => {
+  const fixture = consumer(t);
+  const source = 'import "./.next/types/routes.d.ts";\n';
+  fixture.write("frontend/apps/dashboard/next-env.d.ts", source);
+  const accepted = fixture.run("lint");
+  assert.equal(accepted.status, 0, accepted.stdout + accepted.stderr);
+  fixture.write("frontend/apps/dashboard/handwritten.ts", source);
+  const rejected = fixture.run("lint");
+  assert.notEqual(rejected.status, 0);
+  assert.match(rejected.stdout + rejected.stderr, /no-restricted-imports/);
+});
+
 test("edited wrappers and alternate root configs fail verification", (t) => {
   const fixture = consumer(t);
   fixture.write("oxlint.config.mts", "export default {};\n");

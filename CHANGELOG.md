@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.1
+
+- Exclude Next.js-generated `next-env.d.ts` declarations from linting; handwritten
+  imports continue to follow the same-directory policy.
+
 ## 0.3.0
 
 - Restrict relative imports to files in the same directory across all presets;

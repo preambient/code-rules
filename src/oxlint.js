@@ -9,6 +9,7 @@ export default defineConfig({
     "**/dist/**",
     "**/out/**",
     "**/.next/**",
+    "**/next-env.d.ts",
     "**/.source/**",
     ".agents/**",
     ".claude/**",
