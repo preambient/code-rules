@@ -20,7 +20,10 @@ const conflicts = [
   "oxfmt.config.ts",
 ];
 
-/** Run the package's pinned tool with the verified root configuration. */
+/** Run the package's pinned tool with the verified root configuration.
+ * @param tool - Pinned executable package to invoke.
+ * @param args - Arguments appended after the verified configuration path.
+ */
 function run(tool, args) {
   const manifestPath = require.resolve(`${tool}/package.json`);
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));

@@ -4,10 +4,11 @@ Private, versioned Oxlint and Oxfmt policy published as
 `@preambient/code-rules` to GitHub Packages. This repository owns the settings;
 application repositories import a pinned release.
 
-Version 0.2.0 adds alphabetical sorting and separate runtime presets. Formatting
+The policy includes alphabetical sorting, separate runtime presets, type aliases,
+and JSDoc for every function implementation. Formatting
 uses semicolons, double quotes for ordinary strings, trailing commas, and an
 80-column width. Use template literals for interpolation and multiline content.
-Naming, TSDoc, and additional type-safety policies require a separate release.
+Naming and additional type-safety policies require a separate release.
 
 ## Profiles
 
@@ -183,3 +184,45 @@ publishing. Privacy is controlled by GitHub repository/package permissions.
 Use `type` aliases instead of `interface` declarations. Every preset enforces
 `typescript/consistent-type-definitions: ["error", "type"]`. Convert inheritance
 to intersections after reviewing member compatibility and declaration merging.
+
+### Function documentation
+
+Every function implementation needs an attached `/** ... */` JSDoc block with a
+summary explaining what it does. This includes private helpers, assigned arrows,
+inline callbacks, React handlers, object/class methods, constructors, accessors,
+and test callbacks. Function type signatures have no implementation and are not
+subject to this rule. Existing generated/vendor exclusions still apply.
+
+`jsdoc-js/require-jsdoc` runs inside Oxlint in every preset. It uses
+`eslint-plugin-jsdoc` to validate descriptions, tags, and type syntax and rejects missing blocks, empty summaries,
+and placeholder-only summaries. Every argument needs a named `@param` with a
+meaningful description. Named parameters must match the signature; destructured
+arguments use a descriptive root alias, with nested property tags optional.
+Returned values require `@returns`; async functions describe promise resolution
+(including completion without a value). Generators document emitted values with
+`@yields`. Result tags need meaningful descriptions. TypeScript remains the source
+of types, so repeating `{types}` in tags is optional. Lint does not invent descriptions or
+apply automatic stub comments. Reviewers still check that prose describes the
+actual behavior accurately.
+
+Put docs before a function declaration, its owning variable/property/method,
+or directly before an inline callback. An enclosing function's or call's docs
+do not cover nested callbacks:
+
+```ts
+/**
+ * Increment every count before displaying it.
+ * @param counts - Counts to increment without changing the input array.
+ * @returns A new array containing each count incremented by one.
+ */
+export function incrementCounts(counts: number[]) {
+  return counts.map(
+    /**
+     * Increment the current count.
+     * @param count - Current input count.
+     * @returns The input count plus one.
+     */
+    (count) => count + 1,
+  );
+}
+```

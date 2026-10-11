@@ -17,21 +17,37 @@ const packageRoot =
   process.env.CODE_RULES_PACKAGE_ROOT ??
   resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-/** Create a consumer outside this repository to expose package resolution bugs. */
+/** Create a consumer outside this repository to expose package resolution bugs.
+ * @param t - Test context that registers temporary consumer cleanup.
+ * @returns Fixture directory and helpers for writing files and running the package CLI.
+ */
 function consumer(t) {
   const directory = mkdtempSync(join(tmpdir(), "preambient-policy-"));
-  t.after(() => rmSync(directory, { force: true, recursive: true }));
+  t.after(
+    /** Remove the temporary fixture directory after the test.
+     * @returns Completion of the synchronous directory removal.
+     */
+    () => rmSync(directory, { force: true, recursive: true }),
+  );
   mkdirSync(join(directory, "node_modules/@preambient"), { recursive: true });
   symlinkSync(
     packageRoot,
     join(directory, "node_modules/@preambient/code-rules"),
     "dir",
   );
+  /** Run the installed policy command inside the isolated consumer and capture its output.
+   * @param args - CLI command and arguments to execute in the consumer.
+   * @returns Child process status and captured output.
+   */
   const run = (...args) =>
     spawnSync(process.execPath, [join(packageRoot, "src/cli.js"), ...args], {
       cwd: directory,
       encoding: "utf8",
     });
+  /** Create the fixture parent directories and write the supplied source.
+   * @param file - Consumer-relative destination for the fixture.
+   * @param text - Source content to write at that destination.
+   */
   const write = (file, text) => {
     mkdirSync(dirname(join(directory, file)), { recursive: true });
     writeFileSync(join(directory, file), text);
@@ -41,231 +57,586 @@ function consumer(t) {
   return { directory, run, write };
 }
 
-test("format fixes ordinary strings and preserves interpolation", (t) => {
-  const fixture = consumer(t);
-  fixture.write(
-    "example.ts",
-    "export const greeting='hello'\nexport const message=`Hello ${greeting}`\n",
-  );
-  assert.notEqual(fixture.run("format:check").status, 0);
-  const formatted = fixture.run("format");
-  assert.equal(formatted.status, 0, formatted.stderr);
-  assert.equal(
-    readFileSync(join(fixture.directory, "example.ts"), "utf8"),
-    'export const greeting = "hello";\nexport const message = `Hello ${greeting}`;\n',
-  );
-  assert.equal(fixture.run("check").status, 0);
-});
+test(
+  "format fixes ordinary strings and preserves interpolation",
+  /** Verify that format fixes ordinary strings and preserves interpolation.
+   * @param t - Test context that owns fixture cleanup and subtests.
+   */ (t) => {
+    const fixture = consumer(t);
+    fixture.write(
+      "example.ts",
+      "export const greeting='hello'\nexport const message=`Hello ${greeting}`\n",
+    );
+    assert.notEqual(fixture.run("format:check").status, 0);
+    const formatted = fixture.run("format");
+    assert.equal(formatted.status, 0, formatted.stderr);
+    assert.equal(
+      readFileSync(join(fixture.directory, "example.ts"), "utf8"),
+      'export const greeting = "hello";\nexport const message = `Hello ${greeting}`;\n',
+    );
+    assert.equal(fixture.run("check").status, 0);
+  },
+);
 
-test("backend console rule remains active even with a nested override", (t) => {
-  const fixture = consumer(t);
-  fixture.write("backend/example.ts", 'console.log("example");\n');
-  fixture.write("backend/.oxlintrc.json", '{"rules":{"no-console":"off"}}\n');
-  const result = fixture.run("lint");
-  assert.notEqual(result.status, 0);
-  assert.match(result.stdout + result.stderr, /no-console/);
-});
+test(
+  "backend console rule remains active even with a nested override",
+  /** Verify that backend console rule remains active even with a nested override.
+   * @param t - Test context that owns fixture cleanup and subtests.
+   */ (t) => {
+    const fixture = consumer(t);
+    fixture.write("backend/example.ts", 'console.log("example");\n');
+    fixture.write("backend/.oxlintrc.json", '{"rules":{"no-console":"off"}}\n');
+    const result = fixture.run("lint");
+    assert.notEqual(result.status, 0);
+    assert.match(result.stdout + result.stderr, /no-console/);
+  },
+);
 
-test("component appearance is rejected at call sites and allowed in the UI package", (t) => {
-  const fixture = consumer(t);
-  const source =
-    'import { Button } from "@repo/ui/components/button";\nexport function Example() { return <Button className="rounded-full">Save</Button>; }\n';
-  fixture.write("frontend/example.tsx", source);
-  const rejected = fixture.run("lint");
-  assert.notEqual(rejected.status, 0);
-  assert.match(rejected.stdout + rejected.stderr, /no-restyle/);
-  rmSync(join(fixture.directory, "frontend/example.tsx"));
-  fixture.write("frontend/packages/ui/src/components/example.tsx", source);
-  const accepted = fixture.run("lint");
-  assert.equal(accepted.status, 0, accepted.stdout + accepted.stderr);
-});
+test(
+  "component appearance is rejected at call sites and allowed in the UI package",
+  /** Verify that component appearance is rejected at call sites and allowed in the UI package.
+   * @param t - Test context that owns fixture cleanup and subtests.
+   */ (t) => {
+    const fixture = consumer(t);
+    const source =
+      'import { Button } from "@repo/ui/components/button";\n/** Render the fixture button.\n * @returns The example button element.\n */\nexport function Example() { return <Button className="rounded-full">Save</Button>; }\n';
+    fixture.write("frontend/example.tsx", source);
+    const rejected = fixture.run("lint");
+    assert.notEqual(rejected.status, 0);
+    assert.match(rejected.stdout + rejected.stderr, /no-restyle/);
+    rmSync(join(fixture.directory, "frontend/example.tsx"));
+    fixture.write("frontend/packages/ui/src/components/example.tsx", source);
+    const accepted = fixture.run("lint");
+    assert.equal(accepted.status, 0, accepted.stdout + accepted.stderr);
+  },
+);
 
-test("formatter exclusions are relative to the consumer root", (t) => {
-  const fixture = consumer(t);
-  fixture.write(
-    "backend/packages/db/.drizzle/generated.ts",
-    "invalid ~~~ code",
-  );
-  fixture.write("frontend/typeset.css", "invalid {{{");
-  const result = fixture.run("format:check");
-  assert.equal(result.status, 0, result.stdout + result.stderr);
-});
+test(
+  "formatter exclusions are relative to the consumer root",
+  /** Verify that formatter exclusions are relative to the consumer root.
+   * @param t - Test context that owns fixture cleanup and subtests.
+   */ (t) => {
+    const fixture = consumer(t);
+    fixture.write(
+      "backend/packages/db/.drizzle/generated.ts",
+      "invalid ~~~ code",
+    );
+    fixture.write("frontend/typeset.css", "invalid {{{");
+    const result = fixture.run("format:check");
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+  },
+);
 
-test("generated Next.js declarations are excluded but handwritten imports are checked", (t) => {
-  const fixture = consumer(t);
-  const source = 'import "./.next/types/routes.d.ts";\n';
-  fixture.write("frontend/apps/dashboard/next-env.d.ts", source);
-  const accepted = fixture.run("lint");
-  assert.equal(accepted.status, 0, accepted.stdout + accepted.stderr);
-  fixture.write("frontend/apps/dashboard/handwritten.ts", source);
-  const rejected = fixture.run("lint");
-  assert.notEqual(rejected.status, 0);
-  assert.match(rejected.stdout + rejected.stderr, /no-restricted-imports/);
-});
+test(
+  "generated Next.js declarations are excluded but handwritten imports are checked",
+  /** Verify that generated Next.js declarations are excluded but handwritten imports are checked.
+   * @param t - Test context that owns fixture cleanup and subtests.
+   */ (t) => {
+    const fixture = consumer(t);
+    const source = 'import "./.next/types/routes.d.ts";\n';
+    fixture.write("frontend/apps/dashboard/next-env.d.ts", source);
+    const accepted = fixture.run("lint");
+    assert.equal(accepted.status, 0, accepted.stdout + accepted.stderr);
+    fixture.write("frontend/apps/dashboard/handwritten.ts", source);
+    const rejected = fixture.run("lint");
+    assert.notEqual(rejected.status, 0);
+    assert.match(rejected.stdout + rejected.stderr, /no-restricted-imports/);
+  },
+);
 
-test("edited wrappers and alternate root configs fail verification", (t) => {
-  const fixture = consumer(t);
-  fixture.write("oxlint.config.mts", "export default {};\n");
-  assert.notEqual(fixture.run("verify").status, 0);
-  fixture.write(
-    "oxlint.config.mts",
-    'export { default } from "@preambient/code-rules/oxlint/preambient";\n',
-  );
-  fixture.write(".oxfmtrc.json", "{}\n");
-  assert.notEqual(fixture.run("verify").status, 0);
-});
+test(
+  "edited wrappers and alternate root configs fail verification",
+  /** Verify that edited wrappers and alternate root configs fail verification.
+   * @param t - Test context that owns fixture cleanup and subtests.
+   */ (t) => {
+    const fixture = consumer(t);
+    fixture.write("oxlint.config.mts", "export default {};\n");
+    assert.notEqual(fixture.run("verify").status, 0);
+    fixture.write(
+      "oxlint.config.mts",
+      'export { default } from "@preambient/code-rules/oxlint/preambient";\n',
+    );
+    fixture.write(".oxfmtrc.json", "{}\n");
+    assert.notEqual(fixture.run("verify").status, 0);
+  },
+);
 
-test("init preserves existing files and the CLI rejects override flags", (t) => {
-  const fixture = consumer(t);
-  fixture.write("oxfmt.config.mts", "// existing settings\n");
-  assert.notEqual(fixture.run("init").status, 0);
-  assert.equal(
-    readFileSync(join(fixture.directory, "oxfmt.config.mts"), "utf8"),
-    "// existing settings\n",
-  );
-  assert.notEqual(fixture.run("lint", "--allow", "no-console").status, 0);
-});
+test(
+  "init preserves existing files and the CLI rejects override flags",
+  /** Verify that init preserves existing files and the CLI rejects override flags.
+   * @param t - Test context that owns fixture cleanup and subtests.
+   */ (t) => {
+    const fixture = consumer(t);
+    fixture.write("oxfmt.config.mts", "// existing settings\n");
+    assert.notEqual(fixture.run("init").status, 0);
+    assert.equal(
+      readFileSync(join(fixture.directory, "oxfmt.config.mts"), "utf8"),
+      "// existing settings\n",
+    );
+    assert.notEqual(fixture.run("lint", "--allow", "no-console").status, 0);
+  },
+);
 
-test("alphabetical policy covers every Perfectionist structure through Oxlint", async (t) => {
-  const cases = {
-    "sort-array-includes": 'export const value = ["z", "a"].includes("a");',
-    "sort-arrays": 'export const SORTED_VALUES = ["z", "a"];',
-    "sort-classes":
-      "export class Example { zebra() { return 1; } alpha() { return 2; } }",
-    "sort-decorators":
-      "declare const alpha: any, zebra: any; @zebra @alpha export class Example {}",
-    "sort-enums": 'export enum Example { Zebra = "z", Alpha = "a" }',
-    "sort-export-attributes":
-      'export { value } from "example" with { zebra: "z", alpha: "a" };',
-    "sort-exports": 'export * from "z"; export * from "a";',
-    "sort-heritage-clauses":
-      "interface Alpha { a: string } interface Zebra { z: string } export interface Value extends Zebra, Alpha { value: string }",
-    "sort-import-attributes":
-      'import value from "example" with { zebra: "z", alpha: "a" }; export { value };',
-    "sort-imports":
-      'import zebra from "z"; import alpha from "a"; export { alpha, zebra };',
-    "sort-interfaces":
-      "export interface Value { zebra: string; alpha: string; }",
-    "sort-intersection-types":
-      "type Alpha = { a: string }; type Zebra = { z: string }; export type Value = Zebra & Alpha;",
-    "sort-jsx-props":
-      'export function Example() { return <div title="z" id="a" />; }',
-    "sort-maps": 'export const value = new Map([["z", 1], ["a", 2]]);',
-    "sort-modules":
-      "export function zebra() { return 1; } export function alpha() { return 2; }",
-    "sort-named-exports":
-      "const alpha = 1; const zebra = 2; export { zebra, alpha };",
-    "sort-object-types":
-      "export type Value = { zebra: string; alpha: string };",
-    "sort-objects": "export const value = { zebra: 1, alpha: 2 };",
-    "sort-sets": 'export const value = new Set(["z", "a"]);',
-    "sort-switch-case":
-      'export function value(key: string) { switch(key) { case "z": return 1; case "a": return 2; default: return 0; } }',
-    "sort-union-types": 'export type Value = "z" | "a";',
-    "sort-variable-declarations": "export const zebra = 1, alpha = 2;",
-  };
-  for (const [rule, source] of Object.entries(cases)) {
-    await t.test(rule, (t) => {
-      const fixture = consumer(t);
-      fixture.write("frontend/example.tsx", source);
-      const result = fixture.run("lint");
-      assert.notEqual(result.status, 0);
-      assert.ok(
-        (result.stdout + result.stderr).includes(rule),
-        result.stdout + result.stderr,
+test(
+  "alphabetical policy covers every Perfectionist structure through Oxlint",
+  /** Verify that alphabetical policy covers every Perfectionist structure through Oxlint.
+   * @param t - Test context that owns fixture cleanup and subtests.
+   * @returns Completion after every sorting subtest has run.
+   */ async (t) => {
+    const cases = {
+      "sort-array-includes": 'export const value = ["z", "a"].includes("a");',
+      "sort-arrays": 'export const SORTED_VALUES = ["z", "a"];',
+      "sort-classes":
+        "export class Example { zebra() { return 1; } alpha() { return 2; } }",
+      "sort-decorators":
+        "declare const alpha: any, zebra: any; @zebra @alpha export class Example {}",
+      "sort-enums": 'export enum Example { Zebra = "z", Alpha = "a" }',
+      "sort-export-attributes":
+        'export { value } from "example" with { zebra: "z", alpha: "a" };',
+      "sort-exports": 'export * from "z"; export * from "a";',
+      "sort-heritage-clauses":
+        "interface Alpha { a: string } interface Zebra { z: string } export interface Value extends Zebra, Alpha { value: string }",
+      "sort-import-attributes":
+        'import value from "example" with { zebra: "z", alpha: "a" }; export { value };',
+      "sort-imports":
+        'import zebra from "z"; import alpha from "a"; export { alpha, zebra };',
+      "sort-interfaces":
+        "export interface Value { zebra: string; alpha: string; }",
+      "sort-intersection-types":
+        "type Alpha = { a: string }; type Zebra = { z: string }; export type Value = Zebra & Alpha;",
+      "sort-jsx-props":
+        'export function Example() { return <div title="z" id="a" />; }',
+      "sort-maps": 'export const value = new Map([["z", 1], ["a", 2]]);',
+      "sort-modules":
+        "export function zebra() { return 1; } export function alpha() { return 2; }",
+      "sort-named-exports":
+        "const alpha = 1; const zebra = 2; export { zebra, alpha };",
+      "sort-object-types":
+        "export type Value = { zebra: string; alpha: string };",
+      "sort-objects": "export const value = { zebra: 1, alpha: 2 };",
+      "sort-sets": 'export const value = new Set(["z", "a"]);',
+      "sort-switch-case":
+        'export function value(key: string) { switch(key) { case "z": return 1; case "a": return 2; default: return 0; } }',
+      "sort-union-types": 'export type Value = "z" | "a";',
+      "sort-variable-declarations": "export const zebra = 1, alpha = 2;",
+    };
+    for (const [rule, source] of Object.entries(cases)) {
+      await t.test(
+        rule,
+        /** Verify that the selected alphabetical rule rejects the fixture.
+         * @param t - Test context that owns fixture cleanup and subtests.
+         */ (t) => {
+          const fixture = consumer(t);
+          fixture.write("frontend/example.tsx", source);
+          const result = fixture.run("lint");
+          assert.notEqual(result.status, 0);
+          assert.ok(
+            (result.stdout + result.stderr).includes(rule),
+            result.stdout + result.stderr,
+          );
+        },
       );
-    });
-  }
-  await t.test("named imports use native Oxlint", (t) => {
+    }
+    await t.test(
+      "named imports use native Oxlint",
+      /** Verify that named imports use native Oxlint.
+       * @param t - Test context that owns fixture cleanup and subtests.
+       */ (t) => {
+        const fixture = consumer(t);
+        fixture.write(
+          "frontend/example.ts",
+          'import { zebra, alpha } from "example"; export { alpha, zebra };',
+        );
+        const result = fixture.run("lint");
+        assert.match(result.stdout + result.stderr, /sort-imports/);
+        assert.doesNotMatch(
+          result.stdout + result.stderr,
+          /perfectionist\(sort-named-imports\)/,
+        );
+      },
+    );
+  },
+);
+
+test(
+  "safe fixes preserve runtime evaluation, collection, and positional array order",
+  /** Verify that safe fixes preserve runtime evaluation, collection, and positional array order.
+   * @param t - Test context that owns fixture cleanup and subtests.
+   */ (t) => {
+    const fixture = consumer(t);
+    const source =
+      'declare function record(value: string): number;\nexport const object = { zebra: record("z"), alpha: record("a") };\nexport const set = new Set(["z", "a"]);\nexport const positional = ["z", "a"];\n';
+    fixture.write("example.ts", source);
+    const result = fixture.run("lint:fix");
+    assert.notEqual(result.status, 0);
+    assert.equal(
+      readFileSync(join(fixture.directory, "example.ts"), "utf8"),
+      source,
+    );
+    assert.doesNotMatch(result.stdout + result.stderr, /sort-arrays/);
+  },
+);
+
+test(
+  "safe import fixes preserve side-effect import barriers",
+  /** Verify that safe import fixes preserve side-effect import barriers.
+   * @param t - Test context that owns fixture cleanup and subtests.
+   */ (t) => {
+    const fixture = consumer(t);
+    const source =
+      'import "z-side-effect";\nimport "a-side-effect";\nexport const value = 1;\n';
+    fixture.write("example.ts", source);
+    const result = fixture.run("lint:fix");
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.equal(
+      readFileSync(join(fixture.directory, "example.ts"), "utf8"),
+      source,
+    );
+  },
+);
+
+test(
+  "frontend JSX rules do not leak into backend files",
+  /** Verify that frontend JSX rules do not leak into backend files.
+   * @param t - Test context that owns fixture cleanup and subtests.
+   */ (t) => {
+    const fixture = consumer(t);
+    const source =
+      'export function Example() { return <div title="z" id="a" />; }';
+    fixture.write("backend/example.tsx", source);
+    const result = fixture.run("lint");
+    assert.doesNotMatch(
+      result.stdout + result.stderr,
+      /sort-jsx-props|jsx-a11y|react\(/,
+    );
+  },
+);
+
+test(
+  "mixed imports, re-exports, and callable intersections require review",
+  /** Verify that mixed imports, re-exports, and callable intersections require review.
+   * @param t - Test context that owns fixture cleanup and subtests.
+   */ (t) => {
+    const fixture = consumer(t);
+    const source =
+      'import { zebra } from "./zebra";\nimport "./initialize";\nimport { alpha } from "./alpha";\nexport { alpha, zebra };\nexport * from "./zebra";\nexport * from "./alpha";\ntype Zebra = (value: string) => "zebra";\ntype Alpha = (value: string) => "alpha";\nexport type Fn = Zebra & Alpha;\n';
+    fixture.write("example.ts", source);
+    const result = fixture.run("lint:fix");
+    assert.notEqual(result.status, 0);
+    assert.equal(
+      readFileSync(join(fixture.directory, "example.ts"), "utf8"),
+      source,
+    );
+    for (const rule of [
+      "sort-imports",
+      "sort-exports",
+      "sort-intersection-types",
+    ]) {
+      assert.ok((result.stdout + result.stderr).includes(rule));
+    }
+  },
+);
+
+test(
+  "type aliases are required in frontend, backend, and shared code",
+  /** Verify that type aliases are required in frontend, backend, and shared code.
+   * @param t - Test context that owns fixture cleanup and subtests.
+   */ (t) => {
+    const fixture = consumer(t);
+    for (const file of [
+      "frontend/example.ts",
+      "backend/example.ts",
+      "shared/example.ts",
+    ]) {
+      fixture.write(file, "export interface Example { value: string; }\n");
+      const rejected = fixture.run("lint");
+      assert.notEqual(rejected.status, 0);
+      assert.match(
+        rejected.stdout + rejected.stderr,
+        /consistent-type-definitions/,
+      );
+      fixture.write(file, "export type Example = { value: string; };\n");
+      const accepted = fixture.run("lint");
+      assert.equal(accepted.status, 0, accepted.stdout + accepted.stderr);
+    }
+  },
+);
+
+test(
+  "JSDoc is required for every implementation shape and validates descriptions",
+  /** Verify that JSDoc is required for every implementation shape and validates descriptions.
+   * @param t - Test context that owns fixture cleanup and subtests.
+   */ (t) => {
+    const fixture = consumer(t);
+    const cases = [
+      [
+        "export function describeValue() { return 1; }",
+        "/** Return the example value.\n * @returns The numeric example value.\n */ export function describeValue() { return 1; }",
+      ],
+      [
+        "export const value = () => 1;",
+        "/** Return the example value.\n * @returns The numeric example value.\n */ export const value = () => 1;",
+      ],
+      [
+        "export const value = function named() { return 1; };",
+        "/** Return the example value.\n * @returns The numeric example value.\n */ export const value = function named() { return 1; };",
+      ],
+      [
+        "export default () => 1;",
+        "/** Return the default example value.\n * @returns The default numeric value.\n */ export default () => 1;",
+      ],
+      [
+        "export const values = [1].map((value) => value + 1);",
+        "export const values = [1].map(/** Increment each example value.\n * @param value - Current number from the fixture array.\n * @returns The input number incremented by one.\n */ (value) => value + 1);",
+      ],
+      [
+        "export const value = { getValue() { return 1; } };",
+        "export const value = { /** Return the stored example value.\n * @returns The stored numeric value.\n */ getValue() { return 1; } };",
+      ],
+      [
+        "export const value = { getValue: () => 1 };",
+        "export const value = { /** Return the stored example value.\n * @returns The stored numeric value.\n */ getValue: () => 1 };",
+      ],
+      [
+        "export class Value { constructor() {} }",
+        "export class Value { /** Initialize the example instance. */ constructor() {} }",
+      ],
+      [
+        "export class Value { getValue() { return 1; } }",
+        "export class Value { /** Return the stored example value.\n * @returns The stored numeric value.\n */ getValue() { return 1; } }",
+      ],
+      [
+        "export class Value { get value() { return 1; } }",
+        "export class Value { /** Read the example value.\n * @returns The stored numeric value.\n */ get value() { return 1; } }",
+      ],
+      [
+        "export class Value { set value(_value: number) {} }",
+        "export class Value { /** Accept and discard an example value.\n * @param _value - Incoming value intentionally discarded by this setter.\n */ set value(_value: number) {} }",
+      ],
+      [
+        "export class Value { value = () => 1; }",
+        "export class Value { /** Return the stored example value.\n * @returns The stored numeric value.\n */ value = () => 1; }",
+      ],
+      [
+        "export const value = (() => 1) satisfies () => number;",
+        "/** Return the example value with a checked signature.\n * @returns The numeric example value.\n */ export const value = (() => 1) satisfies () => number;",
+      ],
+      [
+        "export async function value() { return 1; }",
+        "/** Resolve the example value asynchronously.\n * @returns A promise resolving to the numeric example value.\n */ export async function value() { return 1; }",
+      ],
+      [
+        "export function* values() { yield 1; }",
+        "/** Yield the single example value.\n * @yields The numeric example value.\n */ export function* values() { yield 1; }",
+      ],
+      [
+        "/** Construct the result factory.\n * @returns A factory for the numeric example value.\n */ export function value() { return () => 1; }",
+        "/** Construct the result factory.\n * @returns A factory for the numeric example value.\n */ export function value() { return (/** Return the result from the factory.\n * @returns The numeric result produced by the factory.\n */ () => 1); }",
+      ],
+      [
+        "/** Document the container, not its callback. */ export const values = [1].map((value) => value);",
+        "export const values = [1].map(/** Preserve each input value.\n * @param value - Current number from the fixture array.\n * @returns The unchanged input number.\n */ (value) => value);",
+      ],
+      [
+        "/** */ export function value() { return 1; }",
+        "/** Return the example value.\n * @returns The numeric example value.\n */ export function value() { return 1; }",
+      ],
+      [
+        "/** @returns The example value. */ export function value() { return 1; }",
+        "/** Return the example value.\n * @returns The example value.\n */ export function value() { return 1; }",
+      ],
+      [
+        "/** TODO */ export function value() { return 1; }",
+        "/** Return the example value.\n * @returns The numeric example value.\n */ export function value() { return 1; }",
+      ],
+      [
+        "/** Return the supplied value.\n * @param {number value - Value to return.\n */ export function value(value: number) { return value; }",
+        "/** Return the example value.\n * @returns The numeric example value.\n */ export function value() { return 1; }",
+      ],
+      [
+        "// Return the example value.\nexport function value() { return 1; }",
+        "/** Return the example value.\n * @returns The numeric example value.\n */ export function value() { return 1; }",
+      ],
+    ];
+    for (const [undocumented, documented] of cases) {
+      fixture.write("frontend/example.ts", undocumented);
+      const rejected = fixture.run("lint");
+      assert.notEqual(rejected.status, 0, undocumented);
+      assert.match(rejected.stdout + rejected.stderr, /jsdoc-js/, undocumented);
+      fixture.write("frontend/example.ts", documented);
+      const accepted = fixture.run("lint");
+      assert.equal(
+        accepted.status,
+        0,
+        documented + accepted.stdout + accepted.stderr,
+      );
+    }
+  },
+);
+
+test(
+  "documentation checks apply to every runtime, helpers, and tests without adding stubs",
+  /** Verify that documentation checks apply to every runtime, helpers, and tests without adding stubs.
+   * @param t - Test context that owns fixture cleanup and subtests.
+   */ (t) => {
+    const fixture = consumer(t);
+    for (const file of [
+      "backend/helper.ts",
+      "frontend/helper.tsx",
+      "shared/helper.ts",
+      "internal/helper.ts",
+      "backend/test/helper.test.ts",
+      "internal/apps/admin-dashboard/helper.ts",
+    ]) {
+      const source = "export const helper = () => 1;\n";
+      fixture.write(file, source);
+      const rejected = fixture.run("lint:fix");
+      assert.notEqual(rejected.status, 0, file);
+      assert.match(rejected.stdout + rejected.stderr, /jsdoc-js/);
+      assert.equal(readFileSync(join(fixture.directory, file), "utf8"), source);
+      fixture.write(
+        file,
+        "/** Return the helper fixture value.\n * @returns The numeric helper value.\n */\n" +
+          source,
+      );
+      const accepted = fixture.run("lint");
+      assert.equal(accepted.status, 0, accepted.stdout + accepted.stderr);
+    }
+  },
+);
+
+test(
+  "formatting preserves JSDoc on cast arrows and JSX callbacks",
+  /** Verify that Oxfmt preserves documentation ownership around cast arrows and JSX handlers.
+   * @param t - Test context that owns fixture cleanup and subtests.
+   */ (t) => {
+    const fixture = consumer(t);
+    fixture.write(
+      "frontend/example.tsx",
+      `export const value = /** Return the numeric fixture value.\n * @returns The numeric example value.\n */ (() => 1) as () => number;
+export const object = { value: /** Return the object's numeric fixture value.\n * @returns The numeric property value.\n */ (() => 1) as () => number };
+declare const supplied: (() => number) | undefined;
+export const fallback = supplied ?? /** Return zero when no provider is supplied.\n * @returns Zero as the fallback numeric value.\n */ (() => 0);
+/** Render the fixture button.\n * @returns The example button element.\n */
+export function View() { return <button onClick={/** Handle the fixture button click. */ () => {}}>Save</button>; }
+`,
+    );
+    assert.equal(fixture.run("format").status, 0);
+    const result = fixture.run("lint");
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+  },
+);
+
+test(
+  "standard JSDoc tags and optional type annotations are accepted",
+  /** Verify descriptions and tags follow JSDoc conventions without requiring duplicated TypeScript types.
+   * @param t - Test context that owns fixture cleanup and subtests.
+   */ (t) => {
     const fixture = consumer(t);
     fixture.write(
       "frontend/example.ts",
-      'import { zebra, alpha } from "example"; export { alpha, zebra };',
+      `/**
+ * @description Increment the provided numeric value.
+ * @param {number} value - Value to increment.
+ * @returns {number} The incremented value.
+ */
+export function increment(value: number) { return value + 1; }
+`,
     );
     const result = fixture.run("lint");
-    assert.match(result.stdout + result.stderr, /sort-imports/);
-    assert.doesNotMatch(
-      result.stdout + result.stderr,
-      /perfectionist\(sort-named-imports\)/,
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+  },
+);
+
+test(
+  "parameter and result tags must describe the real signature without generating stubs",
+  /** Reject incomplete argument and result documentation while accepting full contracts.
+   * @param t - Test context that registers the isolated consumer cleanup.
+   */
+  (t) => {
+    const fixture = consumer(t);
+    const cases = [
+      [
+        "/** Increment the input.\n * @returns Incremented input.\n */\nexport const increment = (value: number) => value + 1;",
+        /require-param/,
+      ],
+      [
+        "/** Increment the input.\n * @param value - Input number to increment.\n */\nexport const increment = (value: number) => value + 1;",
+        /require-returns/,
+      ],
+      [
+        "/** Increment the input.\n * @param other - Input number to increment.\n * @returns Incremented input.\n */\nexport const increment = (value: number) => value + 1;",
+        /check-param-names/,
+      ],
+      [
+        "/** Increment the input.\n * @param value\n * @returns Incremented input.\n */\nexport const increment = (value: number) => value + 1;",
+        /require-param-description/,
+      ],
+      [
+        "/** Increment the input.\n * @param value - Input number to increment.\n * @returns\n */\nexport const increment = (value: number) => value + 1;",
+        /require-returns-description/,
+      ],
+      [
+        "/** Increment the input.\n * @param value - TODO\n * @returns Incremented input.\n */\nexport const increment = (value: number) => value + 1;",
+        /match-description/,
+      ],
+      [
+        "/** Finish asynchronous work. */\nexport async function finish(): Promise<void> {}",
+        /require-returns/,
+      ],
+      [
+        "/** Read the configured count.\n * @returns Configured count.\n */\nexport const read = ({ count }: { count: number }) => count;",
+        /require-param/,
+      ],
+      [
+        "/** Collect supplied counts.\n * @returns All supplied counts.\n */\nexport const collect = (...counts: number[]) => counts;",
+        /require-param/,
+      ],
+      [
+        "/** Yield the example count. */\nexport function* counts() { yield 1; }",
+        /require-yields/,
+      ],
+      [
+        "/** Yield the example count.\n * @yields\n */\nexport function* counts() { yield 1; }",
+        /require-yields-description/,
+      ],
+    ];
+    for (const [source, diagnostic] of cases) {
+      fixture.write("frontend/example.ts", source);
+      const rejected = fixture.run("lint:fix");
+      assert.notEqual(rejected.status, 0, source);
+      assert.match(rejected.stdout + rejected.stderr, diagnostic);
+      assert.equal(
+        readFileSync(join(fixture.directory, "frontend/example.ts"), "utf8"),
+        source,
+      );
+    }
+    fixture.write(
+      "frontend/example.ts",
+      `/** Read a count from an options object.
+ * @param options - Options containing the count to read.
+ * @returns Configured count.
+ */
+export const read = ({ count }: { count: number }) => count;
+/** Finish asynchronous work.
+ * @returns Completion after the asynchronous operation finishes; no value is produced.
+ */
+export async function finish(): Promise<void> {}
+/** Collect supplied counts.
+ * @param counts - Count values to collect in their original order.
+ * @returns All supplied counts.
+ */
+export const collect = (...counts: number[]) => counts;
+/** Increment an optional count.
+ * @param [value=0] - Starting count, defaulting to zero.
+ * @returns Count incremented by one.
+ */
+export const increment = (value = 0) => value + 1;
+/** Perform a synchronous side effect without a result. */
+export function notify(): void {}
+`,
     );
-  });
-});
-
-test("safe fixes preserve runtime evaluation, collection, and positional array order", (t) => {
-  const fixture = consumer(t);
-  const source =
-    'declare function record(value: string): number;\nexport const object = { zebra: record("z"), alpha: record("a") };\nexport const set = new Set(["z", "a"]);\nexport const positional = ["z", "a"];\n';
-  fixture.write("example.ts", source);
-  const result = fixture.run("lint:fix");
-  assert.notEqual(result.status, 0);
-  assert.equal(
-    readFileSync(join(fixture.directory, "example.ts"), "utf8"),
-    source,
-  );
-  assert.doesNotMatch(result.stdout + result.stderr, /sort-arrays/);
-});
-
-test("safe import fixes preserve side-effect import barriers", (t) => {
-  const fixture = consumer(t);
-  const source =
-    'import "z-side-effect";\nimport "a-side-effect";\nexport const value = 1;\n';
-  fixture.write("example.ts", source);
-  const result = fixture.run("lint:fix");
-  assert.equal(result.status, 0, result.stdout + result.stderr);
-  assert.equal(
-    readFileSync(join(fixture.directory, "example.ts"), "utf8"),
-    source,
-  );
-});
-
-test("frontend JSX rules do not leak into backend files", (t) => {
-  const fixture = consumer(t);
-  const source =
-    'export function Example() { return <div title="z" id="a" />; }';
-  fixture.write("backend/example.tsx", source);
-  const result = fixture.run("lint");
-  assert.doesNotMatch(
-    result.stdout + result.stderr,
-    /sort-jsx-props|jsx-a11y|react\(/,
-  );
-});
-
-test("mixed imports, re-exports, and callable intersections require review", (t) => {
-  const fixture = consumer(t);
-  const source =
-    'import { zebra } from "./zebra";\nimport "./initialize";\nimport { alpha } from "./alpha";\nexport { alpha, zebra };\nexport * from "./zebra";\nexport * from "./alpha";\ntype Zebra = (value: string) => "zebra";\ntype Alpha = (value: string) => "alpha";\nexport type Fn = Zebra & Alpha;\n';
-  fixture.write("example.ts", source);
-  const result = fixture.run("lint:fix");
-  assert.notEqual(result.status, 0);
-  assert.equal(
-    readFileSync(join(fixture.directory, "example.ts"), "utf8"),
-    source,
-  );
-  for (const rule of [
-    "sort-imports",
-    "sort-exports",
-    "sort-intersection-types",
-  ]) {
-    assert.ok((result.stdout + result.stderr).includes(rule));
-  }
-});
-
-test("type aliases are required in frontend, backend, and shared code", (t) => {
-  const fixture = consumer(t);
-  for (const file of [
-    "frontend/example.ts",
-    "backend/example.ts",
-    "shared/example.ts",
-  ]) {
-    fixture.write(file, "export interface Example { value: string; }\n");
-    const rejected = fixture.run("lint");
-    assert.notEqual(rejected.status, 0);
-    assert.match(
-      rejected.stdout + rejected.stderr,
-      /consistent-type-definitions/,
-    );
-    fixture.write(file, "export type Example = { value: string; };\n");
     const accepted = fixture.run("lint");
     assert.equal(accepted.status, 0, accepted.stdout + accepted.stderr);
-  }
-});
+  },
+);

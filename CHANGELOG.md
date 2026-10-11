@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.5.0
+
+- Require descriptive, valid JSDoc on every function implementation, including
+  inline callbacks, methods, constructors, accessors, helpers, and test callbacks.
+- Validate JSDoc syntax with the pinned JSDoc plugin; reject empty
+  summaries and placeholders without generating stub comments.
+- Require matching `@param` names and descriptions, `@returns` descriptions for
+  returned values and async completion, and `@yields` descriptions for generators.
+  Destructured arguments require a root description; TypeScript type duplication
+  and nested property tags remain optional.
+- Test documentation enforcement across all runtime presets and function forms.
+
 ## 0.4.0
 
 - Require TypeScript type aliases instead of interfaces in every preset.

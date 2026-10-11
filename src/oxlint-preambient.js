@@ -31,6 +31,7 @@ export default defineConfig({
     { files: ["backend/**"], plugins: backend.plugins, rules: backend.rules },
   ],
   settings: {
+    ...base.settings,
     shadcn: {
       componentImports: ["^@repo/ui(/|$)"],
       note: "Use component variants and sizes. Component appearance belongs in frontend/packages/ui; only placement/layout may change at call sites.",
