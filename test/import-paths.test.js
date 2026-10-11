@@ -30,10 +30,11 @@ function importFixture(t) {
   );
   return (code) => {
     writeFileSync(source, code);
-    return spawnSync(process.execPath, [binary, "--config", config, source], {
-      cwd: directory,
-      encoding: "utf8",
-    });
+    return spawnSync(
+      process.execPath,
+      [binary, "--format", "default", "--config", config, source],
+      { cwd: directory, encoding: "utf8" },
+    );
   };
 }
 
