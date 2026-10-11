@@ -5,7 +5,7 @@ Private, versioned Oxlint and Oxfmt policy published as
 application repositories import a pinned release.
 
 The policy includes alphabetical sorting, separate runtime presets, type aliases,
-and JSDoc for every function implementation. Formatting
+and JSDoc for exported functions and public methods. Formatting
 uses semicolons, double quotes for ordinary strings, trailing commas, and an
 80-column width. Use template literals for interpolation and multiline content.
 Naming and additional type-safety policies require a separate release.
@@ -187,42 +187,49 @@ to intersections after reviewing member compatibility and declaration merging.
 
 ### Function documentation
 
-Every function implementation needs an attached `/** ... */` JSDoc block with a
-summary explaining what it does. This includes private helpers, assigned arrows,
-inline callbacks, React handlers, object/class methods, constructors, accessors,
-and test callbacks. Function type signatures have no implementation and are not
-subject to this rule. Existing generated/vendor exclusions still apply.
+Exported functions and public methods need an attached `/** ... */` JSDoc block
+explaining their behavior, arguments, and results. This covers direct and separate
+exports, default exports, public class methods, and methods on exported objects.
+Private helpers, inline callbacks, event handlers, and test callbacks do not need
+JSDoc merely because they are functions. Function type signatures have no
+implementation and do not require these blocks. Generated/vendor exclusions apply.
 
-`jsdoc-js/require-jsdoc` runs inside Oxlint in every preset. It uses
-`eslint-plugin-jsdoc` to validate descriptions, tags, and type syntax and rejects missing blocks, empty summaries,
-and placeholder-only summaries. Every argument needs a named `@param` with a
-meaningful description. Named parameters must match the signature; destructured
-arguments use a descriptive root alias, with nested property tags optional.
-Returned values require `@returns`; async functions describe promise resolution
-(including completion without a value). Generators document emitted values with
-`@yields`. Result tags need meaningful descriptions. TypeScript remains the source
-of types, so repeating `{types}` in tags is optional. Lint does not invent descriptions or
-apply automatic stub comments. Reviewers still check that prose describes the
-actual behavior accurately.
+`jsdoc-js/require-jsdoc` runs inside Oxlint in every preset. A small adapter
+limits missing-doc reports to module-exported implementations, following aliases
+and object/class members without traversing function bodies or arbitrary calls. Keep
+meaningful documentation on private helpers where constraints, side effects, or
+failure behavior warrant it; use a short ordinary comment when explaining only
+why a particular implementation choice exists. Do not restate obvious `map`,
+`filter`, or test behavior in a full documentation block.
 
-Put docs before a function declaration, its owning variable/property/method,
-or directly before an inline callback. An enclosing function's or call's docs
-do not cover nested callbacks:
+Any JSDoc that is present is still validated: summaries cannot be empty or
+placeholders, every argument needs a matching `@param` with a description, and
+returned values need `@returns`. Async functions describe promise resolution,
+including completion without a value; generators use `@yields`. Destructured
+arguments use a descriptive root alias; nested property tags are optional.
+TypeScript remains the source of types, so repeating `{types}` is optional.
+Lint never invents descriptions or inserts stub comments. Reviewers check that
+the prose describes actual behavior.
+
+Export analysis is static. Functions passed to wrappers or returned by factories
+are not treated as public merely because they appear inside an exported
+expression; describe their contract on the enclosing API and keep separate docs
+where useful. Rest destructuring, dynamic property names or mutations, inherited
+methods, and prototype/namespace exports still need review rather than inferred
+function exposure.
+
+Document the API while keeping its straightforward implementation readable:
 
 ```ts
 /**
- * Increment every count before displaying it.
- * @param counts - Counts to increment without changing the input array.
- * @returns A new array containing each count incremented by one.
+ * Normalize configured origins before validating them.
+ * @param configured - Comma-separated HTTP origins.
+ * @returns Nonempty origins with surrounding whitespace removed.
  */
-export function incrementCounts(counts: number[]) {
-  return counts.map(
-    /**
-     * Increment the current count.
-     * @param count - Current input count.
-     * @returns The input count plus one.
-     */
-    (count) => count + 1,
-  );
+export function normalizeOrigins(configured: string) {
+  return configured
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
 }
 ```

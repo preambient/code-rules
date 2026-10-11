@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.0
+
+- Require JSDoc on exported functions and public methods rather than every
+  implementation. Inline callbacks, private helpers, test callbacks, and private
+  or protected class methods no longer need documentation solely to satisfy lint.
+- Continue validating descriptions, parameter names and descriptions, returned
+  values, async completion, and yields whenever JSDoc is present.
+- Add regression tests for nested origin trimming, integration filters, hooks,
+  test callbacks, separate exports, and public versus private methods.
+
 ## 0.5.0
 
 - Require descriptive, valid JSDoc on every function implementation, including

@@ -1,9 +1,6 @@
 import { alphabeticalRules } from "./alphabetical.js";
-import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "oxlint";
-
-const require = createRequire(import.meta.url);
 
 export default defineConfig({
   categories: { correctness: "error" },
@@ -22,7 +19,7 @@ export default defineConfig({
   jsPlugins: [
     {
       name: "jsdoc-js",
-      specifier: require.resolve("eslint-plugin-jsdoc"),
+      specifier: fileURLToPath(new URL("./jsdoc.js", import.meta.url)),
     },
     {
       name: "perfectionist",
