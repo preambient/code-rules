@@ -427,10 +427,8 @@ test("documented type alias openings and operator boundaries remain formatter-st
   string;
 `,
     "union-operator.ts": `export type Union =
-  |
-    /** First union member follows its operator. */
-    "A"
-  | "B";
+  | /** First union member follows its operator. */ "A"
+  | /** Second union member follows its operator. */ "B";
 `,
     "union.ts": `export type GrantRole =
   /** First generated enum member. */
