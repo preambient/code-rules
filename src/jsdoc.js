@@ -298,6 +298,7 @@ export default {
     ...jsdoc.rules,
     "require-jsdoc": {
       ...requireJsdoc,
+
       /** Limit upstream missing-doc reports to implementations exposed by module exports.
        * @param context - Oxlint rule context with the parsed module and diagnostic reporter.
        * @returns Upstream JSDoc visitors using a public-implementation report filter.
