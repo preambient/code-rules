@@ -430,9 +430,7 @@ test("documented type alias openings and operator boundaries remain formatter-st
   |
     /** First union member follows its operator. */
     "A"
-  |
-    /** Second union member follows its operator. */
-    "B";
+  | "B";
 `,
     "union.ts": `export type GrantRole =
   /** First generated enum member. */
