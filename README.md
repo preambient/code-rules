@@ -89,7 +89,7 @@ comments, including JSDoc.
    access to the private package. Keep it in an ignored `.env.local` file or your
    secret manager; never commit it. GitHub Actions should use its job token with
    `packages: read` instead of a personal token.
-4. Install an exact release: `bun add --dev --exact @preambient/code-rules@0.7.0`.
+4. Install an exact release: `bun add --dev --exact @preambient/code-rules@0.8.0`.
 5. Replace the existing root Oxc JSON configs with the two wrappers below, or run
    `bunx --no-install preambient-code-rules init` after removing the old configs.
    Initialization refuses to overwrite existing configuration.
@@ -130,6 +130,55 @@ lint fixes. Oxc's ordinary inline suppression mechanisms remain available.
 For other repositories, select `base`, `frontend`/`react`, or `backend` and the
 shared formatter. `oxlint` is also an alias for the base preset. The CLI currently
 expects the Preambient monorepo wrappers; use the native tools with generic presets.
+
+## GraphQL schemas
+
+The `@preambient/code-rules/graphql` export owns reusable GraphQL schema policy.
+Check each complete generated SDL schema with:
+
+```sh
+preambient-code-rules graphql:check customer.graphql admin.graphql
+```
+
+This command does not require Oxc wrapper files. It validates every input as a
+separate complete schema, reports `file:line:column rule: message`, and exits 1
+for any diagnostic or file error. It does not edit schemas or generate prose.
+For application tooling, use the same policy directly:
+
+```ts
+import { checkGraphqlSchema } from "@preambient/code-rules/graphql";
+
+const diagnostics = checkGraphqlSchema(schemaSDL, "customer.graphql");
+```
+
+The synchronous API returns `GraphqlDiagnostic[]`, whose members contain `rule`,
+`message`, `sourceName`, `line`, and `column`. Locations are one-based; diagnostics
+without a source location use 1. Syntax and schema-validation failures become
+diagnostics instead of exceptions. The package owns its pinned `graphql` parser;
+consumers pass SDL strings rather than runtime schema objects.
+
+Policy requires PascalCase type names, camelCase fields/arguments/directives,
+UPPER_SNAKE_CASE enum values, and `Input` suffixes on input objects. Query root
+fields omit `get`/`fetch` prefixes. Boolean output and input-object fields begin
+with `is`, `has`, or `can` followed by a capitalized name; argument names keep
+the general camelCase rule. Every type,
+field, argument, input field, enum value, and custom directive requires a nonempty,
+non-placeholder description. Deprecated members need an explicit meaningful
+reason. Reviewers still assess whether descriptions and migration advice are useful.
+
+Mutation names start with an action verb, followed by a capitalized resource or
+operation name (for example `createItem`, `grantAccess`, or `resetPassword`). Each
+mutation accepts exactly `input: <MutationName>Input!` and returns its own
+`<MutationName>Payload` (nullable or non-null). The verb vocabulary lives in the
+versioned policy; adding verbs requires a policy release. Connections must expose
+`nodes: [Resource!]!` and `pageInfo: PageInfo!`. Definitions and extensions are
+checked together, including schemas with custom root type names.
+
+Authorization, resource-specific connection naming, field nullability decisions,
+pagination bounds/order/cursors, mutation error semantics, demand limits, and
+breaking-change migration approvals remain application-owned contract checks.
+This generic policy deliberately has no application paths or runtime dependencies
+on backend packages.
 
 ## Build authentication
 

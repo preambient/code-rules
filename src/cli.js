@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { checkGraphqlSchema } from "./graphql.js";
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -61,6 +62,23 @@ function verify() {
 
 try {
   const [command, ...extra] = process.argv.slice(2);
+
+  if (command === "graphql:check") {
+    if (extra.length === 0)
+      throw new Error(
+        "Usage: preambient-code-rules graphql:check <schema.graphql> [...]",
+      );
+
+    const diagnostics = extra.flatMap((file) =>
+      checkGraphqlSchema(readFileSync(file, "utf8"), file),
+    );
+
+    for (const diagnostic of diagnostics)
+      console.error(
+        `${diagnostic.sourceName}:${diagnostic.line}:${diagnostic.column} ${diagnostic.rule}: ${diagnostic.message}`,
+      );
+    process.exit(diagnostics.length === 0 ? 0 : 1);
+  }
 
   const commands = [
     "init",

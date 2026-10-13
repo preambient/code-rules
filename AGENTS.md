@@ -1,6 +1,7 @@
 # Code rules ownership
 
-This repository owns Preambient's shared Oxlint and Oxfmt policies.
+- Always use Namespace runners (`namespace-profile-preambient`) for GitHub Actions CI and release workflows. Do not use GitHub-hosted runners.
+  This repository owns Preambient's shared Oxlint and Oxfmt policies.
 
 - Keep the generic presets free of application-specific paths; put monorepo
   exceptions in the `preambient` presets.
