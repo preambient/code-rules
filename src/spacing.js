@@ -8,14 +8,14 @@ export default {
     "lines-around-comment": {
       ...linesAroundComment,
 
-      /** Keep inline argument documentation compact where Oxfmt removes blank lines.
+      /** Keep argument and type-boundary documentation compact where Oxfmt removes blank lines.
        * @param context - Linter context used for source containment and diagnostics.
-       * @returns Upstream comment visitors with an exception for argument-list comments.
+       * @returns Upstream visitors with narrow exceptions at formatter-controlled boundaries.
        */
       create(context) {
         const guarded = Object.create(context, {
           report: {
-            /** Forward member and statement diagnostics while preserving inline argument comments.
+            /** Preserve member spacing while allowing compact argument and type openings.
              * @param descriptor - Upstream comment-spacing diagnostic with its whitespace fix.
              */
             value(descriptor) {
@@ -23,10 +23,19 @@ export default {
                 descriptor.node.range[0],
               );
 
+              const previous = context.sourceCode.getTokenBefore(
+                descriptor.node,
+              );
+
               if (
                 descriptor.messageId === "before" &&
                 (parent?.type === "CallExpression" ||
-                  parent?.type === "NewExpression")
+                  parent?.type === "NewExpression" ||
+                  (parent?.type === "TSTypeAliasDeclaration" &&
+                    previous?.value === "=") ||
+                  (parent?.type === "TSIntersectionType" &&
+                    previous?.value === "&") ||
+                  (parent?.type === "TSUnionType" && previous?.value === "|"))
               )
                 return;
               context.report(descriptor);

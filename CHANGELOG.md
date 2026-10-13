@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.2
+
+- Preserve compact JSDoc at type alias openings and after type operators where
+  required by Oxfmt, including generated union types, so spacing fixes remain
+  stable after formatting. Comments before subsequent union members still
+  require separation from preceding code.
+
 ## 0.8.1
 
 - Require a blank line before JSDoc after preceding code, including object and

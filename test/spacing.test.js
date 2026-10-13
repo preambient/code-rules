@@ -411,3 +411,100 @@ void Reader;
 
   assert.equal(rechecked.status, 0, rechecked.stdout + rechecked.stderr);
 });
+
+test("documented type alias openings and operator boundaries remain formatter-stable", (t) => {
+  const fixture = consumer(t);
+
+  const sources = {
+    "intersection.ts": `export type Intersection =
+  /** First intersection member. */
+  { alpha: string } &
+    /** Second intersection member follows its operator. */
+    { beta: string };
+`,
+    "single.ts": `export type Single =
+  /** Single right-hand-side type. */
+  string;
+`,
+    "union-operator.ts": `export type Union =
+  | /** First union member follows its operator. */ "A"
+  | /** Second union member follows its operator. */ "B";
+`,
+    "union.ts": `export type GrantRole =
+  /** First generated enum member. */
+  | "A"
+
+  /** Later generated enum member keeps its separating blank line. */
+  | "B";
+`,
+  };
+
+  for (const [file, source] of Object.entries(sources))
+    fixture.write(file, source);
+
+  const checked = fixture.run("lint");
+
+  assert.equal(checked.status, 0, checked.stdout + checked.stderr);
+  assert.equal(fixture.run("lint:fix").status, 0);
+  for (const [file, source] of Object.entries(sources))
+    assert.equal(readFileSync(join(fixture.directory, file), "utf8"), source);
+
+  const formatted = fixture.run("format");
+
+  assert.equal(formatted.status, 0, formatted.stdout + formatted.stderr);
+
+  const snapshots = Object.keys(sources).map((file) =>
+    readFileSync(join(fixture.directory, file), "utf8"),
+  );
+
+  for (const output of snapshots)
+    assert.doesNotMatch(output, /(?:=|&|\|)\n\s*\n\s*\/\*\*/);
+  assert.match(snapshots[3], /"A"\n\n\s*\/\*\* Later/);
+
+  const rechecked = fixture.run("check");
+
+  assert.equal(rechecked.status, 0, rechecked.stdout + rechecked.stderr);
+  assert.equal(fixture.run("lint:fix").status, 0);
+  assert.equal(fixture.run("format").status, 0);
+  assert.deepEqual(
+    Object.keys(sources).map((file) =>
+      readFileSync(join(fixture.directory, file), "utf8"),
+    ),
+    snapshots,
+  );
+});
+
+test("later union member documentation still requires separation before its operator", (t) => {
+  const fixture = consumer(t);
+
+  const source = `export type GrantRole =
+  /** First generated enum member. */
+  | "A"
+  /** Later member needs a separating blank line. */
+  | "B";
+`;
+
+  fixture.write("example.ts", source);
+
+  const rejected = fixture.run("lint");
+
+  assert.notEqual(rejected.status, 0);
+  assert.equal(
+    (rejected.stdout + rejected.stderr).match(/lines-around-comment/g)?.length,
+    1,
+    rejected.stdout + rejected.stderr,
+  );
+
+  const fixed = fixture.run("lint:fix");
+
+  assert.equal(fixed.status, 0, fixed.stdout + fixed.stderr);
+  assert.equal(
+    readFileSync(join(fixture.directory, "example.ts"), "utf8"),
+    source.replace('  | "A"\n', '  | "A"\n\n'),
+  );
+  assert.equal(fixture.run("format").status, 0);
+
+  const checked = fixture.run("check");
+
+  assert.equal(checked.status, 0, checked.stdout + checked.stderr);
+});
