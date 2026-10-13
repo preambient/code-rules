@@ -70,9 +70,10 @@ and do not receive extra padding.
 JSDoc comments require a blank line after preceding code, including object
 properties, async arrow members, and class methods. The first comment in a file,
 object, class, block, or other container stays next to its opening boundary.
-Argument-list documentation remains compact because Oxfmt removes blank lines
-there. Ordinary comments and inline comments retain their existing formatting, and JSDoc
-stays attached to the member it documents.
+Argument-list documentation and comments immediately after type operators stay
+compact where Oxfmt removes blank lines. Documented union members with comments
+before the next operator still require separation. Ordinary comments and inline comments retain their
+existing formatting, and JSDoc stays attached to the member it documents.
 
 The pinned `@stylistic/eslint-plugin` spacing rules run inside Oxlint; no separate
 ESLint command is needed. Run `bun run lint:fix` to insert missing blank lines,
@@ -96,7 +97,7 @@ comments, including JSDoc.
    access to the private package. Keep it in an ignored `.env.local` file or your
    secret manager; never commit it. GitHub Actions should use its job token with
    `packages: read` instead of a personal token.
-4. Install an exact release: `bun add --dev --exact @preambient/code-rules@0.8.1`.
+4. Install an exact release: `bun add --dev --exact @preambient/code-rules@0.8.2`.
 5. Replace the existing root Oxc JSON configs with the two wrappers below, or run
    `bunx --no-install preambient-code-rules init` after removing the old configs.
    Initialization refuses to overwrite existing configuration.
