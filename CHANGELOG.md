@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.8.0
+
+- Add a reusable GraphQL SDL checker and typed `./graphql` export for naming,
+  descriptions, explicit deprecation reasons, mutation input/payload conventions,
+  and connection shape. Require descriptive query root names and `is`/`has`/`can`
+  Boolean field prefixes. Return actionable syntax, schema, and policy diagnostics.
+- Add `graphql:check` CLI support for multiple complete schemas without requiring
+  Oxc wrappers. Pin the GraphQL parser and test accepted/rejected schemas through
+  source, packed, and published consumer workflows.
+
 ## 0.7.0
 
 - Require a blank line around variable and function declarations, including

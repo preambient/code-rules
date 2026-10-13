@@ -1,6 +1,6 @@
 {
   "name": "@preambient/code-rules",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Shared Oxlint and Oxfmt policy for Preambient repositories",
   "license": "UNLICENSED",
   "type": "module",
@@ -52,6 +52,10 @@
     "./backend": {
       "types": "./src/oxlint.d.ts",
       "default": "./src/oxlint-backend.js"
+    },
+    "./graphql": {
+      "types": "./src/graphql.d.ts",
+      "default": "./src/graphql.js"
     }
   },
   "bin": {
@@ -70,6 +74,7 @@
     "@stylistic/eslint-plugin": "5.10.0",
     "eslint-plugin-jsdoc": "65.2.4",
     "eslint-plugin-perfectionist": "5.12.1",
+    "graphql": "16.14.2",
     "oxfmt": "0.72.0",
     "oxlint": "1.86.0"
   }
