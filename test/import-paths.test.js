@@ -131,11 +131,13 @@ test("every runtime preset inherits the full JSDoc contract", () => {
   }
 });
 
-test("every runtime preset inherits declaration spacing", () => {
-  const name = "stylistic/padding-line-between-statements";
-
+test("every runtime preset inherits declaration and JSDoc spacing", () => {
   for (const preset of [backend, frontend, preambient]) {
-    assert.deepEqual(preset.rules[name], base.rules[name]);
+    for (const name of [
+      "stylistic/lines-around-comment",
+      "stylistic/padding-line-between-statements",
+    ])
+      assert.deepEqual(preset.rules[name], base.rules[name]);
     assert.ok(preset.jsPlugins.some((plugin) => plugin.name === "stylistic"));
   }
 });

@@ -14,6 +14,22 @@ const declarations = [
 ];
 
 export const spacingRules = {
+  "stylistic/lines-around-comment": [
+    "error",
+    {
+      allowArrayStart: true,
+      allowBlockStart: true,
+      allowClassStart: true,
+      allowEnumStart: true,
+      allowInterfaceStart: true,
+      allowModuleStart: true,
+      allowObjectStart: true,
+      allowTypeStart: true,
+      beforeBlockComment: true,
+      // Comment values exclude their delimiters; only JSDoc starts with "*".
+      ignorePattern: "^(?!\\*)",
+    },
+  ],
   "stylistic/padding-line-between-statements": [
     "error",
     { blankLine: "always", next: declarations, prev: "*" },

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.1
+
+- Require a blank line before JSDoc after preceding code, including object and
+  class members, with safe whitespace autofixes in every preset. Preserve compact
+  container openings and ordinary or inline comments.
+- Verify object async arrow members, class methods, and top-level comments through
+  lint fixes, Oxfmt round trips, and packed consumers.
+
 ## 0.8.0
 
 - Add a reusable GraphQL SDL checker and typed `./graphql` export for naming,

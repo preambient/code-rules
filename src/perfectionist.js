@@ -26,6 +26,7 @@ const reviewedRules = new Set([
 function withReviewedFixes(rule) {
   return {
     ...rule,
+
     /** Wrap rule reports so order-changing fixes require explicit review.
      * @param context - Linter context used to create rule visitors and report diagnostics.
      * @returns Original rule visitors using the guarded reporting context.
