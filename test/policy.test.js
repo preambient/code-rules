@@ -843,6 +843,7 @@ test("static member and destructured exports select only exposed implementations
       "frontend/example.ts",
       `const api = {
   helper: () => 2,
+
   /** Read the stored numeric value.
    * @returns Stored numeric value.
    */
