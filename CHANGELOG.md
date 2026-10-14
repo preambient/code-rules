@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.3
+
+- Require resource-prefixed event module filenames in the Preambient preset.
+  Reject exact `events` JavaScript/TypeScript module basenames while allowing
+  names such as `organization.events.ts`, event directories and other filenames.
+- Verify filename policy through the real Oxlint CLI and packed/published consumers.
+
 ## 0.8.2
 
 - Preserve compact JSDoc at type alias openings and after type operators where

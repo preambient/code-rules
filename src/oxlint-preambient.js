@@ -2,13 +2,21 @@ import backend from "./oxlint-backend.js";
 import frontend from "./oxlint-frontend.js";
 import base from "./oxlint.js";
 import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "oxlint";
 
 const require = createRequire(import.meta.url);
 
 export default defineConfig({
   ...base,
-  jsPlugins: [...base.jsPlugins, require.resolve("@shadcn/lint")],
+  jsPlugins: [
+    ...base.jsPlugins,
+    require.resolve("@shadcn/lint"),
+    {
+      name: "preambient",
+      specifier: fileURLToPath(new URL("./filenames.js", import.meta.url)),
+    },
+  ],
   overrides: [
     {
       files: ["frontend/**", "internal/apps/**"],
@@ -30,6 +38,7 @@ export default defineConfig({
     },
     { files: ["backend/**"], plugins: backend.plugins, rules: backend.rules },
   ],
+  rules: { ...base.rules, "preambient/resource-event-modules": "error" },
   settings: {
     ...base.settings,
     shadcn: {

@@ -932,3 +932,77 @@ test("local runtime module and exports bindings are not CommonJS exports", (t) =
     assert.match(rejected.stdout + rejected.stderr, /require-jsdoc/);
   }
 });
+
+test("event modules require resource names across authored JavaScript and TypeScript extensions", (t) => {
+  const fixture = consumer(t);
+
+  for (const extension of [
+    "js",
+    "jsx",
+    "mjs",
+    "cjs",
+    "ts",
+    "tsx",
+    "mts",
+    "cts",
+  ]) {
+    fixture.write(`backend/organizations/events.${extension}`, "export {};\n");
+  }
+
+  fixture.write("frontend/events.tsx", "export {};\n");
+  fixture.write("shared/events.mts", "export {};\n");
+
+  const rejected = fixture.run("lint");
+
+  assert.notEqual(rejected.status, 0);
+  assert.match(rejected.stdout + rejected.stderr, /resource-event-modules/);
+  assert.match(rejected.stdout + rejected.stderr, /organization\.events\.ts/);
+  for (const extension of [
+    "js",
+    "jsx",
+    "mjs",
+    "cjs",
+    "ts",
+    "tsx",
+    "mts",
+    "cts",
+  ]) {
+    assert.match(
+      rejected.stdout + rejected.stderr,
+      new RegExp(`events\\.${extension}:`),
+    );
+  }
+
+  const fixed = fixture.run("lint:fix");
+
+  assert.notEqual(fixed.status, 0);
+  assert.match(fixed.stdout + fixed.stderr, /resource-event-modules/);
+  fixture.write("backend/organizations/events.ts", "");
+
+  const empty = fixture.run("lint");
+
+  assert.notEqual(empty.status, 0);
+  assert.match(empty.stdout + empty.stderr, /events\.ts:/);
+});
+
+test("resource event filenames and event directories remain valid in every runtime", (t) => {
+  const fixture = consumer(t);
+
+  for (const file of [
+    "backend/organizations/organization.events.ts",
+    "backend/notifications/notification.events.ts",
+    "backend/events/index.ts",
+    "backend/types.ts",
+    "frontend/events/index.tsx",
+    "frontend/organization.events.jsx",
+    "shared/organization.events.mts",
+    "shared/notification.events.cts",
+    "dist/events.ts",
+  ]) {
+    fixture.write(file, "export {};\n");
+  }
+
+  const allowed = fixture.run("lint");
+
+  assert.equal(allowed.status, 0, allowed.stdout + allowed.stderr);
+});
