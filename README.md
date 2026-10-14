@@ -8,7 +8,7 @@ The policy includes alphabetical sorting, separate runtime presets, type aliases
 and JSDoc for exported functions and public methods. Formatting
 uses semicolons, double quotes for ordinary strings, trailing commas, and an
 80-column width. Use template literals for interpolation and multiline content.
-Naming and additional type-safety policies require a separate release.
+Additional naming and type-safety policies require a separate release.
 
 ## Profiles
 
@@ -26,6 +26,16 @@ The monorepo preset applies frontend rules to `frontend/**` and `internal/apps/*
 backend rules to `backend/**`, and shared rules to the remaining code. Next.js
 server and client modules both use the React profile; package-boundary checks
 still enforce browser/backend ownership.
+
+## Event module filenames
+
+The Preambient preset requires a resource name in event module filenames, such as
+`organizations/organization.events.ts` or `notifications/notification.events.ts`.
+The `preambient/resource-event-modules` rule rejects exact `events.js`, `events.jsx`,
+`events.mjs`, `events.cjs`, `events.ts`, `events.tsx`, `events.mts` and `events.cts`
+filenames, including empty modules. It allows `events/index.ts`, other directory
+conventions and unrelated names such as `types.ts`. It does not automatically
+rename files or change imports. Existing generated/vendor exclusions still apply.
 
 ## Alphabetical sorting
 
@@ -97,7 +107,7 @@ comments, including JSDoc.
    access to the private package. Keep it in an ignored `.env.local` file or your
    secret manager; never commit it. GitHub Actions should use its job token with
    `packages: read` instead of a personal token.
-4. Install an exact release: `bun add --dev --exact @preambient/code-rules@0.8.2`.
+4. Install an exact release: `bun add --dev --exact @preambient/code-rules@0.8.3`.
 5. Replace the existing root Oxc JSON configs with the two wrappers below, or run
    `bunx --no-install preambient-code-rules init` after removing the old configs.
    Initialization refuses to overwrite existing configuration.
@@ -237,7 +247,7 @@ For a release, update `package.json` and `CHANGELOG.md`, run `bun run check` and
 `bash scripts/test-package.sh`, commit and push to `main`, then run:
 
 ```sh
-gh workflow run release.yml --repo preambient/code-rules --ref main -f version=0.2.0
+gh workflow run release.yml --repo preambient/code-rules --ref main -f version=0.8.3
 ```
 
 A new policy requires a new version; never replace an existing published version.
