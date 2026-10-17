@@ -88,7 +88,7 @@ test("backend console rule remains active even with a nested override", (t) => {
   assert.match(result.stdout + result.stderr, /no-console/);
 });
 
-test("component appearance is rejected at call sites and allowed in the UI package", (t) => {
+test("component appearance is rejected in compositions and allowed only in registered primitive files", (t) => {
   const fixture = consumer(t);
 
   const source =
@@ -101,7 +101,25 @@ test("component appearance is rejected at call sites and allowed in the UI packa
   assert.notEqual(rejected.status, 0);
   assert.match(rejected.stdout + rejected.stderr, /no-restyle/);
   rmSync(join(fixture.directory, "frontend/example.tsx"));
-  fixture.write("frontend/packages/ui/src/components/example.tsx", source);
+  fixture.write(
+    "frontend/packages/ui/src/components/pages/example.tsx",
+    source,
+  );
+
+  const composition = fixture.run("lint");
+
+  assert.notEqual(composition.status, 0);
+  assert.match(
+    composition.stdout + composition.stderr,
+    /no-restyle|ui-contracts/,
+  );
+  rmSync(
+    join(
+      fixture.directory,
+      "frontend/packages/ui/src/components/pages/example.tsx",
+    ),
+  );
+  fixture.write("frontend/packages/ui/src/components/atoms/button.tsx", source);
 
   const accepted = fixture.run("lint");
 
@@ -475,7 +493,9 @@ test("formatting preserves JSDoc on cast arrows and JSX callbacks", (t) => {
 
   fixture.write(
     "frontend/example.tsx",
-    `export const value = /** Return the numeric fixture value.\n * @returns The numeric example value.\n */ (() => 1) as () => number;
+    `import { Button } from "@repo/ui/components/atoms/button";
+
+export const value = /** Return the numeric fixture value.\n * @returns The numeric example value.\n */ (() => 1) as () => number;
 
 export const object = { value: /** Return the object's numeric fixture value.\n * @returns The numeric property value.\n */ (() => 1) as () => number };
 
@@ -484,7 +504,7 @@ declare const supplied: (() => number) | undefined;
 export const fallback = supplied ?? /** Return zero when no provider is supplied.\n * @returns Zero as the fallback numeric value.\n */ (() => 0);
 
 /** Render the fixture button.\n * @returns The example button element.\n */
-export function View() { return <button onClick={/** Handle the fixture button click. */ () => {}}>Save</button>; }
+export function View() { return <Button onClick={/** Handle the fixture button click. */ () => {}}>Save</Button>; }
 `,
   );
   assert.equal(fixture.run("format").status, 0);
@@ -659,14 +679,16 @@ export function reader() { return () => 1; }`,
   #read = () => 1;
   private normalize(value: string) { return value.trim(); }
 }`,
-    `declare function useEffect(callback: () => (() => void), dependencies: unknown[]): void;
+    `import { Button } from "@repo/ui/components/atoms/button";
+
+declare function useEffect(callback: () => (() => void), dependencies: unknown[]): void;
 
 /** Render a button after registering cleanup.
  * @returns The button element.
  */
 export function View() {
   useEffect(() => { return () => {}; }, []);
-  return <button onClick={() => {}}>Save</button>;
+  return <Button onClick={() => {}}>Save</Button>;
 }`,
   ];
 
@@ -875,7 +897,7 @@ export { read };`,
     "let read;\n\nread = () => 1;\n\nexport { read };",
     "let read;\n\nread = () => 1;\n\nconst alias = read;\n\nexport { alias };",
   ]) {
-    fixture.write("frontend/example.ts", source);
+    fixture.write("shared/example.ts", source);
 
     const rejected = fixture.run("lint");
 
@@ -883,7 +905,7 @@ export { read };`,
     assert.match(rejected.stdout + rejected.stderr, /require-jsdoc/);
   }
   fixture.write(
-    "frontend/example.ts",
+    "shared/example.ts",
     `/* oxlint-disable perfectionist/sort-modules */
 /** Read the stored numeric value.
  * @returns Stored numeric value.
@@ -1005,4 +1027,239 @@ test("resource event filenames and event directories remain valid in every runti
   const allowed = fixture.run("lint");
 
   assert.equal(allowed.status, 0, allowed.stdout + allowed.stderr);
+});
+
+test("UI contracts accept semantic Typography, atomic owners, aliases, and declared slots", (t) => {
+  const fixture = consumer(t);
+
+  fixture.write(
+    "frontend/example.tsx",
+    `import { Button as Action } from "@repo/ui/components/atoms/button";
+import * as Text from "@repo/ui/components/atoms/typography";
+import type { ReactNode } from "react";
+
+type Slots = { children: ReactNode; hint?: ReactNode };
+
+const Copy = Text.Typography.p;
+
+/** Forward explicitly declared renderable slots.
+ * @param props - Main and hint slots.
+ * @returns The arranged content.
+ */
+export function Arrange({ children, hint }: Readonly<Slots>) { return <div>{children}{hint}</div>; }
+
+/** Compose canonical text and controls.
+ * @returns The semantic example.
+ */
+export function Example() { return <div><Copy>Hello <Text.Typography.strong>team</Text.Typography.strong></Copy><Action className="mt-2 w-full"><span lang="en">Save</span></Action></div>; }
+`,
+  );
+
+  const result = fixture.run("lint");
+
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+});
+
+test("UI contracts reject text and component styling escapes across composition levels", async (t) => {
+  const cases = {
+    "bare text": "<div>Hello</div>",
+    "children attribute": '<div children="Hello" />',
+    "conditional text": '<div>{Date.now() ? "yes" : "no"}</div>',
+
+    "conditional typography":
+      '<div className={Date.now() ? "text-sm" : "text-lg"}><Copy>Hello</Copy></div>',
+    "constant typography":
+      "<div className={textStyle}><Copy>Hello</Copy></div>",
+    "custom button role":
+      '<div role="button" tabIndex={0}><Copy>Save</Copy></div>',
+    "dynamic text": "<div>{String(Date.now())}</div>",
+    "forged Typography": "<Local.p>Hello</Local.p>",
+    "fragment text": "<>Hello</>",
+    "inline style": "<Copy style={{ fontSize: 30 }}>Hello</Copy>",
+    "layout inherited typography":
+      '<div className="font-semibold"><Copy>Hello</Copy></div>',
+    "mapped strings": '<div>{["one", "two"].map((value) => value)}</div>',
+    "native button": '<button type="button">Save</button>',
+    "native input": '<input aria-label="Name" />',
+
+    "raw dynamic span": "<span>{String(Date.now())}</span>",
+    "raw paragraph": "<p>Hello</p>",
+    "sized button": '<Action className="h-16 px-8">Save</Action>',
+    "structural component": "<Field>Hello</Field>",
+    "styled button alias": '<Action className="rounded-full">Save</Action>',
+    "styled component member alias": '<Renamed className="py-8">Save</Renamed>',
+    "typography override": '<Copy className="text-xl">Hello</Copy>',
+    "untyped children": "<div>{children}</div>",
+  };
+
+  const fixture = consumer(t);
+
+  const files = new Map();
+
+  for (const [name, expression] of Object.entries(cases)) {
+    const file = `frontend/packages/ui/stories/pages/${name.replaceAll(" ", "-")}.tsx`;
+
+    files.set(name, file);
+    fixture.write(
+      file,
+      `import { Button as Action } from "@repo/ui/components/atoms/button";
+import { Typography } from "@repo/ui/components/atoms/typography";
+import { Field } from "@repo/ui/components/molecules/field";
+
+const Copy = Typography.p;
+
+const Renamed = Action;
+
+const textStyle = "text-xl";
+
+/** Render a policy fixture.
+ * @param props - Unapproved string children.
+ * @returns The fixture.
+ */
+export function Example({ children }: { children: string }) { return ${expression}; }
+`,
+    );
+  }
+
+  const result = fixture.run("lint");
+
+  const output = result.stdout + result.stderr;
+
+  assert.notEqual(result.status, 0);
+  for (const [name, file] of files)
+    await t.test(name, () => {
+      assert.ok(
+        output
+          .split("\n")
+          .some(
+            (line) =>
+              line.startsWith(`${file}:`) &&
+              /ui-contracts|no-restyle/u.test(line),
+          ),
+        `${name}: ${output}`,
+      );
+    });
+});
+
+test("CSS contracts reject text overrides, primitive selectors, apply escapes and inline suppressions", async (t) => {
+  const cases = {
+    apply: ["frontend/example.css", ".layout { @apply text-xl; }"],
+    color: ["frontend/example.css", ".layout { color: red; }"],
+    selector: [
+      "frontend/example.css",
+      '[data-slot="button"] { padding: 2rem; }',
+    ],
+    suppression: [
+      "frontend/example.tsx",
+      "// oxlint-disable ui-policy/ui-contracts\nexport const value = <div>Hello</div>;",
+    ],
+    typography: ["frontend/example.css", ".copy { font-size: 18px; }"],
+  };
+
+  for (const [name, [file, source]] of Object.entries(cases))
+    await t.test(name, (context) => {
+      const fixture = consumer(context);
+
+      fixture.write(file, source);
+
+      const result = fixture.run("lint");
+
+      assert.notEqual(result.status, 0);
+      assert.match(result.stdout + result.stderr, /ui-contracts/);
+    });
+});
+
+test("CSS layout and the existing scoped MDX wrapper remain approved", (t) => {
+  const fixture = consumer(t);
+
+  fixture.write("frontend/layout.css", ".layout { display: grid; gap: 1rem; }");
+  fixture.write(
+    "frontend/packages/ui/.storybook/overview-document.tsx",
+    `/** Render the existing MDX surface.
+ * @returns Scoped document typography.
+ */
+export function Overview() { return <div className="typeset typeset-docs" style={{ maxWidth: "33em" }}>Rendered MDX</div>; }
+`,
+  );
+
+  const result = fixture.run("lint");
+
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+});
+
+test("the existing next-intl declaration-merging suppression cannot disable UI contracts", (t) => {
+  const fixture = consumer(t);
+
+  const file = "frontend/packages/i18n/src/frontend/index.ts";
+
+  fixture.write(
+    file,
+    "// next-intl requires an interface for declaration merging.\n// oxlint-disable-next-line typescript/consistent-type-definitions\nexport interface AppConfig { Locale: string; }\n",
+  );
+
+  const accepted = fixture.run("lint");
+
+  assert.equal(accepted.status, 0, accepted.stdout + accepted.stderr);
+  fixture.write(
+    file,
+    "// oxlint-disable ui-policy/ui-contracts\nexport const value = 1;\n",
+  );
+
+  const rejected = fixture.run("lint");
+
+  assert.notEqual(rejected.status, 0);
+  assert.match(rejected.stdout + rejected.stderr, /ui-contracts/);
+});
+
+test("lower-level control imports, createElement text and nested configurations cannot bypass UI contracts", (t) => {
+  const fixture = consumer(t);
+
+  fixture.write(
+    "frontend/oxlint.config.ts",
+    'export default { rules: { "ui-policy/ui-contracts": "off" } };\n',
+  );
+  fixture.write(
+    "frontend/escape.tsx",
+    `import { Button } from "@base-ui/react/button";
+import { createElement } from "react";
+
+export const element = createElement("p", null, "Unowned text");
+
+export const control = <Button />;
+
+export const html = <div dangerouslySetInnerHTML={{ __html: "Unowned text" }} />;
+`,
+  );
+
+  const result = fixture.run("lint");
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stdout + result.stderr, /ui-contracts/);
+  assert.match(result.stdout + result.stderr, /Render authored text/);
+  assert.match(result.stdout + result.stderr, /shared UI primitive/);
+});
+
+test("Storybook args cannot restyle the canonical component through generated rendering", (t) => {
+  const fixture = consumer(t);
+
+  fixture.write(
+    "frontend/example.stories.tsx",
+    `export const Resized = { args: { className: "text-xl rounded-full" } };
+
+export const InlineStyle = { args: { style: { fontSize: 28 } } };
+`,
+  );
+
+  const rejected = fixture.run("lint");
+
+  assert.notEqual(rejected.status, 0);
+  assert.match(rejected.stdout + rejected.stderr, /ui-contracts/);
+  fixture.write(
+    "frontend/example.stories.tsx",
+    'export const FullWidth = { args: { className: "w-full" } };\n',
+  );
+
+  const accepted = fixture.run("lint");
+
+  assert.equal(accepted.status, 0, accepted.stdout + accepted.stderr);
 });

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.4
+
+- Require compound Typography or registered text-owning primitive parts for authored UI text. Check native tags, fragments, dynamic expressions, aliases, and declared ReactNode slot forwarding.
+- Replace the UI directory exemption with an explicit canonical primitive file registry. Reject native control recreation, appearance overrides, inline styles, inherited typography classes, and frontend inline lint suppressions.
+- Check authored CSS through the shared CLI; keep theme, Typography, vendor Typeset, and the existing MDX surface as narrow named exceptions. Pin PostCSS for stylesheet parsing.
+- Cover positive and negative contracts through the real CLI and packed consumers.
+
 ## 0.8.3
 
 - Require resource-prefixed event module filenames in the Preambient preset.
