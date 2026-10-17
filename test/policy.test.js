@@ -1135,8 +1135,10 @@ export function Example({ children }: { children: string }) { return ${expressio
           .split("\n")
           .some(
             (line) =>
-              line.startsWith(`${file}:`) &&
-              /ui-contracts|no-restyle/u.test(line),
+              line.includes(file) &&
+              /ui-contracts|no-restyle|Render authored text|shared UI primitive|canonical variants|Text appearance|Inline styles/u.test(
+                line,
+              ),
           ),
         `${name}: ${output}`,
       );
