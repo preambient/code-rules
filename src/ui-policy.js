@@ -363,6 +363,12 @@ function create(context) {
         return safe(callback.body);
     }
 
+    if (
+      node.type === "ArrowFunctionExpression" &&
+      node.body.type !== "BlockStatement"
+    )
+      return safe(node.body);
+
     const text = source.getText(node);
 
     for (let parent = node.parent; parent; parent = parent.parent)

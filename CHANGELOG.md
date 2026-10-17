@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.5
+
+- Accept JSX-only render props in the UI text contract; continue rejecting returned strings and unowned text.
+- Exempt the two named Core GraphQL Code Generator outputs from ordering and spacing rules while retaining correctness, import and UI checks. Generated output remains subject to schema, type, formatting and freshness checks in Core.
+
 ## 0.8.4
 
 - Require compound Typography or registered text-owning primitive parts for authored UI text. Check native tags, fragments, dynamic expressions, aliases, and declared ReactNode slot forwarding.
