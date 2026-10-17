@@ -1,6 +1,7 @@
 import backend from "./oxlint-backend.js";
 import frontend from "./oxlint-frontend.js";
 import base from "./oxlint.js";
+import { documentFiles, primitiveFiles } from "./ui-policy.js";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "oxlint";
@@ -13,6 +14,10 @@ export default defineConfig({
     ...base.jsPlugins,
     require.resolve("@shadcn/lint"),
     {
+      name: "ui-policy",
+      specifier: fileURLToPath(new URL("./ui-policy.js", import.meta.url)),
+    },
+    {
       name: "preambient",
       specifier: fileURLToPath(new URL("./filenames.js", import.meta.url)),
     },
@@ -24,16 +29,35 @@ export default defineConfig({
       rules: {
         ...frontend.rules,
         "shadcn/no-arbitrary-values": "error",
+        "shadcn/no-inline-styles": "error",
         "shadcn/no-raw-colors": "error",
-        "shadcn/no-restyle": ["error", { allow: ["layout"] }],
+        "shadcn/no-restyle": [
+          "error",
+          {
+            allow: ["layout"],
+            contracts: [
+              { allow: ["layout", "gap"], pattern: "^Typography(?:ul|ol|dl)$" },
+            ],
+          },
+        ],
         "shadcn/require-static-classes": "error",
+        "ui-policy/ui-contracts": "error",
       },
     },
     {
-      files: ["frontend/packages/ui/src/components/**"],
+      files: primitiveFiles,
       rules: {
         "shadcn/no-arbitrary-values": "off",
+        "shadcn/no-inline-styles": "off",
         "shadcn/no-restyle": "off",
+        "ui-policy/ui-contracts": "off",
+      },
+    },
+    {
+      files: documentFiles,
+      rules: {
+        "shadcn/no-inline-styles": "off",
+        "ui-policy/ui-contracts": "off",
       },
     },
     { files: ["backend/**"], plugins: backend.plugins, rules: backend.rules },

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { checkGraphqlSchema } from "./graphql.js";
+import { checkUiStyles } from "./ui-styles.js";
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -106,8 +107,12 @@ try {
   }
   verify();
   if (["check", "lint", "lint:fix"].includes(command)) {
+    const diagnostics = checkUiStyles(process.cwd());
+
+    if (diagnostics.length > 0) throw new Error(diagnostics.join("\n"));
     run("oxlint", [
       "--deny-warnings",
+      "--disable-nested-config",
       ...(command === "lint:fix" ? ["--fix"] : []),
     ]);
   }
