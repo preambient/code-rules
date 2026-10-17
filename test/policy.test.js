@@ -1060,6 +1060,59 @@ export function Example() { return <div><Copy>Hello <Text.Typography.strong>team
   assert.equal(result.status, 0, result.stdout + result.stderr);
 });
 
+test("UI contracts accept JSX render props and parenthesized mapped elements", (t) => {
+  const fixture = consumer(t);
+
+  fixture.write(
+    "frontend/example.tsx",
+    `import { Typography } from "@repo/ui/components/atoms/typography";
+
+/** Compose a streamed query and mapped links.
+ * @param props - Query component and labels.
+ * @returns Owned text inside layout elements.
+ */
+export function Example({ labels, Query }: { labels: string[]; Query: any }) {
+  return <Query>{() => (<nav><Typography.ul>{labels.map((label) => (<Typography.li key={label}><Typography.a href="/">{label}</Typography.a></Typography.li>))}</Typography.ul></nav>)}</Query>;
+}
+`,
+  );
+
+  const result = fixture.run("lint");
+
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+});
+
+test("generated GraphQL ordering exceptions retain correctness and stay narrowly scoped", (t) => {
+  const fixture = consumer(t);
+
+  for (const app of ["console", "platform"])
+    fixture.write(
+      `frontend/apps/${app}/lib/graphql/generated.ts`,
+      "export const document = { z: 1, a: 2 };\n",
+    );
+
+  const allowed = fixture.run("lint");
+
+  assert.equal(allowed.status, 0, allowed.stdout + allowed.stderr);
+  fixture.write(
+    "frontend/apps/console/lib/graphql/generated.ts",
+    "export const document = { z: 1, a: 2 }; document = {};\n",
+  );
+  fixture.write(
+    "frontend/apps/console/lib/graphql/handwritten.ts",
+    "export const document = { z: 1, a: 2 };\n",
+  );
+
+  const rejected = fixture.run("lint");
+
+  assert.notEqual(rejected.status, 0);
+  assert.match(rejected.stdout + rejected.stderr, /no-const-assign/u);
+  assert.match(
+    rejected.stdout + rejected.stderr,
+    /handwritten.ts.*sort-objects/u,
+  );
+});
+
 test("UI contracts reject text and component styling escapes across composition levels", async (t) => {
   const cases = {
     "bare text": "<div>Hello</div>",
@@ -1080,12 +1133,16 @@ test("UI contracts reject text and component styling escapes across composition 
       '<div className="font-semibold"><Copy>Hello</Copy></div>',
     "list padding override":
       '<Typography.ul className="p-4"><Typography.li>One</Typography.li></Typography.ul>',
+    "mapped parenthesized strings":
+      '<div>{["one", "two"].map((value) => (value))}</div>',
     "mapped strings": '<div>{["one", "two"].map((value) => value)}</div>',
     "native button": '<button type="button">Save</button>',
     "native input": '<input aria-label="Name" />',
 
     "raw dynamic span": "<span>{String(Date.now())}</span>",
     "raw paragraph": "<p>Hello</p>",
+    "rendered strings": '<Query>{() => "Hello"}</Query>',
+    "rendered unowned text": "<Query>{() => (<div>Hello</div>)}</Query>",
     "sized button": '<Action className="h-16 px-8">Save</Action>',
     "structural component": "<Field>Hello</Field>",
     "styled button alias": '<Action className="rounded-full">Save</Action>',

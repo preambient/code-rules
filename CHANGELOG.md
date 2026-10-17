@@ -1,9 +1,14 @@
 # Changelog
 
+## 0.8.6
+
+- Register the exact Atomic Design paths for shadcn skeleton, dropdown menu, empty, table, tooltip, dialog, and sidebar primitives, plus the tooltip provider. Keep appearance and text ownership scoped to canonical implementations and named parts.
+- Cover composition of the new primitives and rejection of styling and text-owner escapes through source and packed consumers.
+
 ## 0.8.5
 
-- Register the exact Atomic Design paths for shadcn skeleton, dropdown menu, empty, table, tooltip, dialog, and sidebar primitives. Keep appearance and text ownership scoped to their canonical implementations and named parts.
-- Cover composition of the new primitives and rejection of styling and text-owner escapes through source and packed consumers.
+- Accept JSX-only render props in the UI text contract; continue rejecting returned strings and unowned text.
+- Exempt the two named Core GraphQL Code Generator outputs from ordering and spacing rules while retaining correctness, import and UI checks. Generated output remains subject to schema, type, formatting and freshness checks in Core.
 
 ## 0.8.4
 

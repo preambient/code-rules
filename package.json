@@ -1,6 +1,6 @@
 {
   "name": "@preambient/code-rules",
-  "version": "0.8.5",
+  "version": "0.8.6",
   "description": "Shared Oxlint and Oxfmt policy for Preambient repositories",
   "license": "UNLICENSED",
   "type": "module",
