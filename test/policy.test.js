@@ -1267,3 +1267,56 @@ export const InlineStyle = { args: { style: { fontSize: 28 } } };
 
   assert.equal(accepted.status, 0, accepted.stdout + accepted.stderr);
 });
+
+test("app shell primitives accept canonical parts and keep structural containers protected", (t) => {
+  const fixture = consumer(t);
+
+  fixture.write(
+    "frontend/example.tsx",
+    `import { DropdownMenuItem } from "@repo/ui/components/molecules/dropdown-menu";
+import { EmptyTitle } from "@repo/ui/components/molecules/empty";
+import { TableCell } from "@repo/ui/components/molecules/table";
+import { TooltipContent } from "@repo/ui/components/molecules/tooltip";
+import { DialogTitle } from "@repo/ui/components/organisms/dialog";
+import { SidebarMenuButton } from "@repo/ui/components/organisms/sidebar";
+
+/** Compose the registered text-owning parts.
+ * @returns Canonical interface parts with their own copy.
+ */
+export function Example() { return <><DropdownMenuItem>Theme</DropdownMenuItem><EmptyTitle>No clients</EmptyTitle><TableCell>Client</TableCell><TooltipContent>Details</TooltipContent><DialogTitle>Add client</DialogTitle><SidebarMenuButton>Clients</SidebarMenuButton></>; }
+`,
+  );
+
+  const accepted = fixture.run("lint");
+
+  assert.equal(accepted.status, 0, accepted.stdout + accepted.stderr);
+  for (const expression of [
+    '<SidebarMenuButton className="bg-red-500">Clients</SidebarMenuButton>',
+    "<SidebarHeader>Clients</SidebarHeader>",
+    "<EmptyContent>No clients</EmptyContent>",
+    "<DialogContent>Add client</DialogContent>",
+    "<TableRow>Client</TableRow>",
+  ]) {
+    fixture.write(
+      "frontend/example.tsx",
+      `import { EmptyContent } from "@repo/ui/components/molecules/empty";
+import { TableRow } from "@repo/ui/components/molecules/table";
+import { DialogContent } from "@repo/ui/components/organisms/dialog";
+import { SidebarHeader, SidebarMenuButton } from "@repo/ui/components/organisms/sidebar";
+
+/** Verify structural parts do not inherit primitive text ownership.
+ * @returns The rejected composition.
+ */
+export function Example() { return ${expression}; }
+`,
+    );
+
+    const rejected = fixture.run("lint");
+
+    assert.notEqual(rejected.status, 0, expression);
+    assert.match(
+      rejected.stdout + rejected.stderr,
+      /ui-contracts|no-raw-colors|no-restyle/,
+    );
+  }
+});

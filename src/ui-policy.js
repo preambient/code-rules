@@ -12,10 +12,21 @@ const primitiveModules = {
   "atoms/progress": ["ProgressLabel", "ProgressValue"],
   "atoms/select": ["SelectItem", "SelectLabel", "SelectValue"],
   "atoms/separator": [],
+  "atoms/skeleton": [],
   "atoms/textarea": [],
   "atoms/toggle": ["Toggle"],
   "atoms/typography": ["Typography"],
   "molecules/button-group": ["ButtonGroupText"],
+  "molecules/dropdown-menu": [
+    "DropdownMenuCheckboxItem",
+    "DropdownMenuItem",
+    "DropdownMenuLabel",
+    "DropdownMenuRadioItem",
+    "DropdownMenuShortcut",
+    "DropdownMenuSubTrigger",
+    "DropdownMenuTrigger",
+  ],
+  "molecules/empty": ["EmptyDescription", "EmptyTitle"],
   "molecules/field": [
     "FieldDescription",
     "FieldError",
@@ -32,12 +43,20 @@ const primitiveModules = {
     "PaginationPrevious",
   ],
   "molecules/radio-group": [],
+  "molecules/table": ["TableCaption", "TableCell", "TableHead"],
+  "molecules/tooltip": ["TooltipContent", "TooltipTrigger"],
   "organisms/alert-dialog": [
     "AlertDialogAction",
     "AlertDialogCancel",
     "AlertDialogDescription",
     "AlertDialogTitle",
     "AlertDialogTrigger",
+  ],
+  "organisms/dialog": [
+    "DialogClose",
+    "DialogDescription",
+    "DialogTitle",
+    "DialogTrigger",
   ],
   "organisms/questionnaire": [
     "QuestionnaireChoice",
@@ -56,6 +75,12 @@ const primitiveModules = {
     "SheetTitle",
     "SheetTrigger",
   ],
+  "organisms/sidebar": [
+    "SidebarGroupLabel",
+    "SidebarMenuBadge",
+    "SidebarMenuButton",
+    "SidebarMenuSubButton",
+  ],
   "organisms/toast": [
     "ToastAction",
     "ToastClose",
@@ -64,9 +89,12 @@ const primitiveModules = {
   ],
 };
 
-const primitiveFiles = Object.keys(primitiveModules).map(
-  (name) => `frontend/packages/ui/src/components/${name}.tsx`,
-);
+const primitiveFiles = [
+  ...Object.keys(primitiveModules).map(
+    (name) => `frontend/packages/ui/src/components/${name}.tsx`,
+  ),
+  "frontend/packages/ui/src/providers/tooltip-provider.tsx",
+];
 
 const documentFiles = ["frontend/packages/ui/.storybook/overview-document.tsx"];
 

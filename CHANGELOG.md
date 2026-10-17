@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.5
+
+- Register the exact Atomic Design paths for shadcn skeleton, dropdown menu, empty, table, tooltip, dialog, and sidebar primitives. Keep appearance and text ownership scoped to their canonical implementations and named parts.
+- Cover composition of the new primitives and rejection of styling and text-owner escapes through source and packed consumers.
+
 ## 0.8.4
 
 - Require compound Typography or registered text-owning primitive parts for authored UI text. Check native tags, fragments, dynamic expressions, aliases, and declared ReactNode slot forwarding.
