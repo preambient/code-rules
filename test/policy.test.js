@@ -1051,7 +1051,7 @@ export function Arrange({ children, hint }: Readonly<Slots>) { return <div>{chil
 /** Compose canonical text and controls.
  * @returns The semantic example.
  */
-export function Example() { return <div><Copy>Hello <Text.Typography.strong>team</Text.Typography.strong></Copy><Action className="mt-2 w-full"><span lang="en">Save</span></Action></div>; }
+export function Example() { return <div><Copy>Hello <Text.Typography.strong>team</Text.Typography.strong></Copy><Action className="mt-2 w-full"><span lang="en">Save</span></Action><Text.Typography.ul className="flex flex-col gap-2"><Text.Typography.li>One</Text.Typography.li><Text.Typography.li>Two</Text.Typography.li></Text.Typography.ul></div>; }
 `,
   );
 
@@ -1078,6 +1078,8 @@ test("UI contracts reject text and component styling escapes across composition 
     "inline style": "<Copy style={{ fontSize: 30 }}>Hello</Copy>",
     "layout inherited typography":
       '<div className="font-semibold"><Copy>Hello</Copy></div>',
+    "list padding override":
+      '<Typography.ul className="p-4"><Typography.li>One</Typography.li></Typography.ul>',
     "mapped strings": '<div>{["one", "two"].map((value) => value)}</div>',
     "native button": '<button type="button">Save</button>',
     "native input": '<input aria-label="Name" />',

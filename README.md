@@ -332,6 +332,8 @@ appearance. A new file in the UI package is subject to the same policy as an app
 At call sites, use canonical `variant`, `size`, `tone`, and `align` props;
 `className` may arrange or place a component, including full-width controls.
 Padding, heights, shape, and selected-state styling belong in the primitive.
+Typography lists allow layout gaps because UI layouts own spacing; their
+canonical indentation remains protected.
 Direct lower-level primitive imports and raw React `createElement` text/controls
 are checked too. The CLI ignores nested Oxlint configurations so they cannot
 disable the root contract. Native control recreation, inline styles, and typography utility classes on

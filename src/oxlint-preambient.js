@@ -31,7 +31,15 @@ export default defineConfig({
         "shadcn/no-arbitrary-values": "error",
         "shadcn/no-inline-styles": "error",
         "shadcn/no-raw-colors": "error",
-        "shadcn/no-restyle": ["error", { allow: ["layout"] }],
+        "shadcn/no-restyle": [
+          "error",
+          {
+            allow: ["layout"],
+            contracts: [
+              { allow: ["layout", "gap"], pattern: "^Typography(?:ul|ol|dl)$" },
+            ],
+          },
+        ],
         "shadcn/require-static-classes": "error",
         "ui-policy/ui-contracts": "error",
       },
