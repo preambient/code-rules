@@ -1,4 +1,4 @@
-import base from "./oxfmt.js";
+import base from "#src/oxfmt";
 import { defineConfig } from "oxfmt";
 
 export default defineConfig({

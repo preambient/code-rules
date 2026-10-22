@@ -1,9 +1,9 @@
-import { alphabeticalRules } from "./alphabetical.js";
-import backend from "./oxlint-backend.js";
-import frontend from "./oxlint-frontend.js";
-import base from "./oxlint.js";
-import { spacingRules } from "./spacing-rules.js";
-import { documentFiles, primitiveFiles } from "./ui-policy.js";
+import { alphabeticalRules } from "#src/alphabetical";
+import base from "#src/oxlint";
+import backend from "#src/oxlint-backend";
+import frontend from "#src/oxlint-frontend";
+import { spacingRules } from "#src/spacing-rules";
+import { documentFiles, primitiveFiles } from "#src/ui-policy";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "oxlint";

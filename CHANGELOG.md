@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.0
+
+- Require extensionless local JavaScript and TypeScript imports, including relative
+  paths and `#`, `@/`, and `~/` aliases, across all presets. Preserve bare third-party
+  entry points such as `pino/browser.js` and asset imports such as JSON and CSS.
+- Keep the same-directory relative import restriction. Check static, type-only,
+  side-effect, re-export, and literal dynamic imports through source and packed consumers.
+- Use extensionless package aliases inside this package so its Node ESM modules
+  follow the same policy without changing their published entry points.
+
 ## 0.8.6
 
 - Register the exact Atomic Design paths for shadcn skeleton, dropdown menu, empty, table, tooltip, dialog, and sidebar primitives, plus the tooltip provider. Keep appearance and text ownership scoped to canonical implementations and named parts.

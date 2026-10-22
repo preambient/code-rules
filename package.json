@@ -1,6 +1,6 @@
 {
   "name": "@preambient/code-rules",
-  "version": "0.8.6",
+  "version": "0.9.0",
   "description": "Shared Oxlint and Oxfmt policy for Preambient repositories",
   "license": "UNLICENSED",
   "type": "module",
@@ -19,6 +19,9 @@
     "src",
     "README.md"
   ],
+  "imports": {
+    "#src/*": "./src/*.js"
+  },
   "exports": {
     "./oxlint": {
       "types": "./src/oxlint.d.ts",

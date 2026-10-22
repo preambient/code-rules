@@ -1,16 +1,32 @@
-import backend from "@preambient/code-rules/backend";
-import base from "@preambient/code-rules/base";
-import frontend from "@preambient/code-rules/frontend";
-import preambient from "@preambient/code-rules/oxlint/preambient";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { test } from "node:test";
+import { fileURLToPath } from "node:url";
 
-const require = createRequire(import.meta.url);
+const packageRoot =
+  process.env.CODE_RULES_PACKAGE_ROOT ??
+  resolve(dirname(fileURLToPath(import.meta.url)), "..");
+
+const require = createRequire(join(packageRoot, "package.json"));
+
+const backend = (
+  await import(require.resolve("@preambient/code-rules/backend"))
+).default;
+
+const base = (await import(require.resolve("@preambient/code-rules/base")))
+  .default;
+
+const frontend = (
+  await import(require.resolve("@preambient/code-rules/frontend"))
+).default;
+
+const preambient = (
+  await import(require.resolve("@preambient/code-rules/oxlint/preambient"))
+).default;
 
 const binary = join(
   dirname(require.resolve("oxlint/package.json")),
@@ -51,7 +67,7 @@ function importFixture(t) {
   );
 }
 
-test("every runtime preset inherits the same-directory import policy", () => {
+test("every runtime preset inherits the local import policies", () => {
   const rule = base.rules["no-restricted-imports"];
 
   assert.equal(rule[0], "error");
@@ -65,18 +81,104 @@ test("every runtime preset inherits the same-directory import policy", () => {
   }
 });
 
-test("same-directory files, aliases, and package exports remain allowed", (t) => {
+test("extensionless local imports, dependency entry points, and assets remain allowed", (t) => {
   const lint = importFixture(t);
 
   for (const path of [
     "./queries",
-    "./queries.js",
+    "./organization.events",
+    "./styles.css",
+    "./catalog.json",
+    "./icon.svg",
+    "./icon.svg?module=icon.js",
+    "./icon.svg#icon.js",
+    "./queries?source=queries.js",
     "@repo/zero/queries",
     "@/queries",
+    "@/styles.css",
     "#queries",
+    "#src/queries",
+    "#src/catalog.json",
+    "#src/styles.css?source=theme.ts",
+    "~/queries",
+    "pino/browser.js",
+    "@vendor/package/dist/runtime.mjs",
+    "vendor/package.cjs",
     "node:fs",
   ]) {
     const result = lint(`export * from "${path}";`);
+
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+  }
+});
+
+test("local code imports reject every JavaScript and TypeScript extension", (t) => {
+  const lint = importFixture(t);
+
+  for (const prefix of ["./", "../", "#", "#src/", "@/", "~/", "/src/"]) {
+    for (const extension of [
+      "js",
+      "jsx",
+      "mjs",
+      "cjs",
+      "ts",
+      "tsx",
+      "mts",
+      "cts",
+      "d.ts",
+    ]) {
+      const path = `${prefix}queries.${extension}`;
+
+      const result = lint(`import "${path}";`);
+
+      assert.equal(
+        result.status,
+        1,
+        `${path}\n${result.stdout}${result.stderr}`,
+      );
+      assert.match(
+        result.stdout + result.stderr,
+        /Local JavaScript and TypeScript imports must be extensionless/,
+      );
+    }
+  }
+});
+
+test("type imports, re-exports, and literal dynamic imports cannot bypass extension checks", (t) => {
+  const lint = importFixture(t);
+
+  for (const source of [
+    'import { query } from "./queries.js"; export { query };',
+    'import type { Query } from "#src/queries.ts"; export type Value = Query;',
+    'export type { Query } from "@/queries.d.ts";',
+    'export type * from "#src/queries.ts";',
+    'export { query } from "./queries.mjs";',
+    'export * from "./queries.js";',
+    'export const load = () => import("~/queries.ts");',
+    'import "./queries.js?raw";',
+    'import "./queries.js#named";',
+  ]) {
+    const result = lint(source);
+
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.match(
+      result.stdout + result.stderr,
+      /Local JavaScript and TypeScript imports must be extensionless/,
+    );
+  }
+});
+
+test("dependency entry points remain allowed in static and dynamic imports and re-exports", (t) => {
+  const lint = importFixture(t);
+
+  for (const source of [
+    'import pino from "pino/browser.js"; export { pino };',
+    'export * from "@vendor/package/runtime.js";',
+    'export type { Options } from "@vendor/package/types.d.ts";',
+    'export const load = () => import("pino/browser.js");',
+    'import "vendor/register.cjs";',
+  ]) {
+    const result = lint(source);
 
     assert.equal(result.status, 0, result.stdout + result.stderr);
   }
