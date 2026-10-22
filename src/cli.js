@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { checkGraphqlSchema } from "./graphql.js";
-import { checkUiStyles } from "./ui-styles.js";
+import { checkGraphqlSchema } from "#src/graphql";
+import { checkUiStyles } from "#src/ui-styles";
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";

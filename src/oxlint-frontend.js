@@ -1,5 +1,5 @@
-import { jsxSortingRule } from "./alphabetical.js";
-import base from "./oxlint.js";
+import { jsxSortingRule } from "#src/alphabetical";
+import base from "#src/oxlint";
 import { defineConfig } from "oxlint";
 
 export default defineConfig({

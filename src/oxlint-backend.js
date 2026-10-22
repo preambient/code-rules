@@ -1,4 +1,4 @@
-import base from "./oxlint.js";
+import base from "#src/oxlint";
 import { defineConfig } from "oxlint";
 
 export default defineConfig({

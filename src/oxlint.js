@@ -1,5 +1,5 @@
-import { alphabeticalRules } from "./alphabetical.js";
-import { spacingRules } from "./spacing-rules.js";
+import { alphabeticalRules } from "#src/alphabetical";
+import { spacingRules } from "#src/spacing-rules";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "oxlint";
 
@@ -99,6 +99,12 @@ export default defineConfig({
             message:
               "Relative imports must reference a file in the same directory. Use a package export or an alias for other directories.",
             regex: "^(?:\\.\\.(?:/|$)|\\./(?:.*/|$))",
+          },
+          {
+            message:
+              "Local JavaScript and TypeScript imports must be extensionless. Remove the file extension or use an extensionless package alias. Third-party package entry points such as pino/browser.js are allowed.",
+            regex:
+              "^(?:\\.{1,2}/|/|#|@/|~/)[^?#]*\\.(?:[cm]?[jt]s|[jt]sx)(?:[?#].*)?$",
           },
         ],
       },
