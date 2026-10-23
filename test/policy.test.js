@@ -1057,6 +1057,7 @@ export const Arrange = ({ children, hint }: Readonly<Slots>) => { return <div>{c
     "frontend/example.tsx",
     `import { Button as Action } from "@repo/ui/components/atoms/button";
 import * as Text from "@repo/ui/components/atoms/typography";
+
 const Copy = Text.Typography.p;
 
 /** Compose canonical text and controls.
