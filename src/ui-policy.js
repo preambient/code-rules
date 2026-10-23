@@ -89,11 +89,227 @@ const primitiveModules = {
   ],
 };
 
+const primitiveParts = {
+  "atoms/avatar": [
+    "avatar-group-count",
+    "avatar-fallback",
+    "avatar",
+    "avatar-group",
+    "avatar-badge",
+    "avatar-image",
+  ],
+  "atoms/kbd": ["kbd", "kbd-group"],
+  "atoms/native-select": [
+    "native-select-opt-group",
+    "shared",
+    "native-select",
+    "native-select-option",
+  ],
+  "atoms/progress": [
+    "progress-value",
+    "progress-label",
+    "progress",
+    "progress-track",
+    "progress-indicator",
+  ],
+  "atoms/select": [
+    "select-value",
+    "select-content",
+    "select-label",
+    "select-group",
+    "select-scroll-up-button",
+    "select-trigger",
+    "select-scroll-down-button",
+    "select-item",
+    "select-separator",
+  ],
+  "atoms/toggle": ["shared", "toggle-group", "toggle"],
+  "molecules/button-group": [
+    "shared",
+    "button-group-separator",
+    "button-group-text",
+    "button-group",
+  ],
+  "molecules/dropdown-menu": [
+    "dropdown-menu-label",
+    "dropdown-menu-trigger",
+    "dropdown-menu-sub",
+    "dropdown-menu-content",
+    "dropdown-menu-shortcut",
+    "dropdown-menu",
+    "dropdown-menu-item",
+    "dropdown-menu-separator",
+    "dropdown-menu-radio-group",
+    "dropdown-menu-sub-trigger",
+    "dropdown-menu-radio-item",
+    "dropdown-menu-group",
+    "dropdown-menu-checkbox-item",
+    "dropdown-menu-sub-content",
+    "dropdown-menu-portal",
+  ],
+  "molecules/empty": [
+    "empty-content",
+    "empty-description",
+    "shared",
+    "empty-title",
+    "empty-header",
+    "empty-media",
+    "empty",
+  ],
+  "molecules/field": [
+    "field-content",
+    "field",
+    "field-group",
+    "shared",
+    "field-legend",
+    "field-error",
+    "field-label",
+    "field-set",
+    "field-title",
+    "field-description",
+    "field-separator",
+  ],
+  "molecules/input-group": [
+    "input-group-button",
+    "shared",
+    "input-group-textarea",
+    "input-group-text",
+    "input-group-input",
+    "input-group",
+    "input-group-addon",
+  ],
+  "molecules/marker": ["shared", "marker-content", "marker-icon", "marker"],
+  "molecules/pagination": [
+    "pagination",
+    "shared",
+    "pagination-content",
+    "pagination-previous",
+    "pagination-ellipsis",
+    "pagination-item",
+    "pagination-link",
+    "pagination-next",
+  ],
+  "molecules/radio-group": ["radio-group", "radio-group-item"],
+  "molecules/table": [
+    "shared",
+    "table-caption",
+    "table-header",
+    "table-footer",
+    "table-row",
+    "table-cell",
+    "table-head",
+    "table",
+    "table-body",
+  ],
+  "molecules/tooltip": ["tooltip-trigger", "tooltip-content", "tooltip"],
+  "organisms/alert-dialog": [
+    "alert-dialog-overlay",
+    "alert-dialog-action",
+    "alert-dialog-trigger",
+    "alert-dialog-content",
+    "alert-dialog-header",
+    "alert-dialog-media",
+    "alert-dialog-portal",
+    "alert-dialog-description",
+    "alert-dialog",
+    "alert-dialog-footer",
+    "alert-dialog-cancel",
+    "alert-dialog-title",
+  ],
+  "organisms/dialog": [
+    "dialog-close",
+    "dialog-content",
+    "dialog-overlay",
+    "dialog-trigger",
+    "dialog-description",
+    "dialog-header",
+    "dialog-portal",
+    "dialog-footer",
+    "dialog-title",
+    "dialog",
+  ],
+  "organisms/questionnaire": [
+    "questionnaire-choice",
+    "questionnaire-progress",
+    "questionnaire-description",
+    "questionnaire-error",
+    "questionnaire-skip",
+    "questionnaire-next",
+    "questionnaire-previous",
+    "questionnaire-submit",
+    "questionnaire-actions",
+    "questionnaire-choice-description",
+    "questionnaire-title",
+    "questionnaire",
+    "questionnaire-input",
+    "questionnaire-choices",
+    "questionnaire-item",
+  ],
+  "organisms/sheet": [
+    "sheet-content",
+    "sheet-portal",
+    "sheet-footer",
+    "sheet-trigger",
+    "sheet-title",
+    "sheet-description",
+    "sheet-header",
+    "sheet",
+    "sheet-close",
+    "sheet-overlay",
+  ],
+  "organisms/sidebar": [
+    "sidebar-separator",
+    "sidebar-trigger",
+    "sidebar-provider",
+    "sidebar-footer",
+    "sidebar-rail",
+    "sidebar-menu-sub-item",
+    "sidebar-inset",
+    "shared",
+    "sidebar-group-content",
+    "sidebar",
+    "sidebar-group-label",
+    "sidebar-group",
+    "sidebar-menu-sub-button",
+    "sidebar-group-action",
+    "sidebar-header",
+    "sidebar-menu-item",
+    "sidebar-menu-sub",
+    "sidebar-menu-badge",
+    "sidebar-menu",
+    "sidebar-menu-skeleton",
+    "sidebar-input",
+    "sidebar-menu-button",
+    "sidebar-menu-action",
+    "sidebar-content",
+  ],
+  "organisms/toast": [
+    "toaster",
+    "toast-action",
+    "shared",
+    "toast-title",
+    "toast-content",
+    "toast-close",
+    "toast-provider",
+    "toast-description",
+    "toast-list",
+    "toast-viewport",
+    "toast-icon",
+    "toast-portal",
+    "toast",
+  ],
+};
+
 const primitiveFiles = [
   ...Object.keys(primitiveModules).map(
     (name) => `frontend/packages/ui/src/components/${name}.tsx`,
   ),
   "frontend/packages/ui/src/providers/tooltip-provider.tsx",
+  ...Object.entries(primitiveParts).flatMap(([module, parts]) =>
+    parts.map(
+      (part) => `frontend/packages/ui/src/components/${module}/${part}.tsx`,
+    ),
+  ),
 ];
 
 const documentFiles = ["frontend/packages/ui/.storybook/overview-document.tsx"];
@@ -270,7 +486,22 @@ function create(context) {
       return /^Typography\.(?:a|blockquote|code|dd|dl|dt|em|h[1-6]|li|ol|p|pre|small|span|srOnly|strong|ul)$/u.test(
         info.name,
       );
-    return primitiveModules[module]?.includes(info.name) ?? false;
+    if (primitiveModules[module]?.includes(info.name)) return true;
+
+    const parent = module.slice(0, module.lastIndexOf("/"));
+
+    const part = module.slice(module.lastIndexOf("/") + 1);
+
+    const componentPart = info.name
+      .replace(/([a-z0-9])([A-Z])/gu, "$1-$2")
+      .replace(/([A-Z])([A-Z][a-z])/gu, "$1-$2")
+      .toLowerCase();
+
+    return (
+      primitiveParts[parent]?.includes(part) &&
+      part === componentPart &&
+      (primitiveModules[parent]?.includes(info.name) ?? false)
+    );
   }
 
   /** Find an owning text element without crossing an unregistered component boundary.

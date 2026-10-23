@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.10.0
+
+- Require one React component definition per file, including compound primitives,
+  private helpers, nested components, Storybook examples, and async server components.
+- Require React components to use `const` arrow functions. Ordinary utilities,
+  hooks, server operations, and inline render callbacks may still use functions.
+- Apply both rules in the generic frontend preset and the Preambient preset,
+  independent of application directory layout. Definition-free re-export barrels
+  preserve compound component APIs without exemptions.
+- Register the exact split primitive parts and shared implementation files, keeping
+  direct imports' text ownership without introducing directory-wide exemptions.
+
 ## 0.9.0
 
 - Require extensionless local JavaScript and TypeScript imports, including relative

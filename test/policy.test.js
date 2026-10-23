@@ -92,7 +92,7 @@ test("component appearance is rejected in compositions and allowed only in regis
   const fixture = consumer(t);
 
   const source =
-    'import { Button } from "@repo/ui/components/button";\n\n/** Render the fixture button.\n * @returns The example button element.\n */\nexport function Example() { return <Button className="rounded-full">Save</Button>; }\n';
+    'import { Button } from "@repo/ui/components/button";\n\n/** Render the fixture button.\n * @returns The example button element.\n */\nexport const Example = () => { return <Button className="rounded-full">Save</Button>; };\n';
 
   fixture.write("frontend/example.tsx", source);
 
@@ -206,7 +206,7 @@ test("alphabetical policy covers every Perfectionist structure through Oxlint", 
     "sort-intersection-types":
       "type Alpha = { a: string }; type Zebra = { z: string }; export type Value = Zebra & Alpha;",
     "sort-jsx-props":
-      'export function Example() { return <div title="z" id="a" />; }',
+      'export const Example = () => { return <div title="z" id="a" />; };',
     "sort-maps": 'export const value = new Map([["z", 1], ["a", 2]]);',
     "sort-modules":
       "export function zebra() { return 1; }\n\nexport function alpha() { return 2; }",
@@ -294,7 +294,7 @@ test("frontend JSX rules do not leak into backend files", (t) => {
   const fixture = consumer(t);
 
   const source =
-    'export function Example() { return <div title="z" id="a" />; }';
+    'export const Example = () => { return <div title="z" id="a" />; };';
 
   fixture.write("backend/example.tsx", source);
 
@@ -495,16 +495,24 @@ test("formatting preserves JSDoc on cast arrows and JSX callbacks", (t) => {
     "frontend/example.tsx",
     `import { Button } from "@repo/ui/components/atoms/button";
 
-export const value = /** Return the numeric fixture value.\n * @returns The numeric example value.\n */ (() => 1) as () => number;
+export const value = /** Return the numeric fixture value.
+ * @returns The numeric example value.
+ */ (() => 1) as () => number;
 
-export const object = { value: /** Return the object's numeric fixture value.\n * @returns The numeric property value.\n */ (() => 1) as () => number };
+export const object = { value: /** Return the object's numeric fixture value.
+ * @returns The numeric property value.
+ */ (() => 1) as () => number };
 
 declare const supplied: (() => number) | undefined;
 
-export const fallback = supplied ?? /** Return zero when no provider is supplied.\n * @returns Zero as the fallback numeric value.\n */ (() => 0);
+export const fallback = supplied ?? /** Return zero when no provider is supplied.
+ * @returns Zero as the fallback numeric value.
+ */ (() => 0);
 
-/** Render the fixture button.\n * @returns The example button element.\n */
-export function View() { return <Button onClick={/** Handle the fixture button click. */ () => {}}>Save</Button>; }
+/** Render the fixture button.
+ * @returns The example button element.
+ */
+export const View = () => { return <Button onClick={/** Handle the fixture button click. */ () => {}}>Save</Button>; };
 `,
   );
   assert.equal(fixture.run("format").status, 0);
@@ -686,10 +694,10 @@ declare function useEffect(callback: () => (() => void), dependencies: unknown[]
 /** Render a button after registering cleanup.
  * @returns The button element.
  */
-export function View() {
+export const View = () => {
   useEffect(() => { return () => {}; }, []);
   return <Button onClick={() => {}}>Save</Button>;
-}`,
+};`,
   ];
 
   for (const source of cases) {
@@ -1033,25 +1041,29 @@ test("UI contracts accept semantic Typography, atomic owners, aliases, and decla
   const fixture = consumer(t);
 
   fixture.write(
-    "frontend/example.tsx",
-    `import { Button as Action } from "@repo/ui/components/atoms/button";
-import * as Text from "@repo/ui/components/atoms/typography";
-import type { ReactNode } from "react";
+    "frontend/arrange.tsx",
+    `import type { ReactNode } from "react";
 
 type Slots = { children: ReactNode; hint?: ReactNode };
-
-const Copy = Text.Typography.p;
 
 /** Forward explicitly declared renderable slots.
  * @param props - Main and hint slots.
  * @returns The arranged content.
  */
-export function Arrange({ children, hint }: Readonly<Slots>) { return <div>{children}{hint}</div>; }
+export const Arrange = ({ children, hint }: Readonly<Slots>) => { return <div>{children}{hint}</div>; };
+`,
+  );
+  fixture.write(
+    "frontend/example.tsx",
+    `import { Button as Action } from "@repo/ui/components/atoms/button";
+import * as Text from "@repo/ui/components/atoms/typography";
+
+const Copy = Text.Typography.p;
 
 /** Compose canonical text and controls.
  * @returns The semantic example.
  */
-export function Example() { return <div><Copy>Hello <Text.Typography.strong>team</Text.Typography.strong></Copy><Action className="mt-2 w-full"><span lang="en">Save</span></Action><Text.Typography.ul className="flex flex-col gap-2"><Text.Typography.li>One</Text.Typography.li><Text.Typography.li>Two</Text.Typography.li></Text.Typography.ul></div>; }
+export const Example = () => { return <div><Copy>Hello <Text.Typography.strong>team</Text.Typography.strong></Copy><Action className="mt-2 w-full"><span lang="en">Save</span></Action><Text.Typography.ul className="flex flex-col gap-2"><Text.Typography.li>One</Text.Typography.li><Text.Typography.li>Two</Text.Typography.li></Text.Typography.ul></div>; };
 `,
   );
 
@@ -1071,9 +1083,9 @@ test("UI contracts accept JSX render props and parenthesized mapped elements", (
  * @param props - Query component and labels.
  * @returns Owned text inside layout elements.
  */
-export function Example({ labels, Query }: { labels: string[]; Query: any }) {
+export const Example = ({ labels, Query }: { labels: string[]; Query: any }) => {
   return <Query>{() => (<nav><Typography.ul>{labels.map((label) => (<Typography.li key={label}><Typography.a href="/">{label}</Typography.a></Typography.li>))}</Typography.ul></nav>)}</Query>;
-}
+};
 `,
   );
 
@@ -1239,7 +1251,7 @@ test("CSS layout and the existing scoped MDX wrapper remain approved", (t) => {
     `/** Render the existing MDX surface.
  * @returns Scoped document typography.
  */
-export function Overview() { return <div className="typeset typeset-docs" style={{ maxWidth: "33em" }}>Rendered MDX</div>; }
+export const Overview = () => { return <div className="typeset typeset-docs" style={{ maxWidth: "33em" }}>Rendered MDX</div>; };
 `,
   );
 
@@ -1340,7 +1352,7 @@ import { SidebarMenuButton } from "@repo/ui/components/organisms/sidebar";
 /** Compose the registered text-owning parts.
  * @returns Canonical interface parts with their own copy.
  */
-export function Example() { return <><DropdownMenuItem>Theme</DropdownMenuItem><EmptyTitle>No clients</EmptyTitle><TableCell>Client</TableCell><TooltipContent>Details</TooltipContent><DialogTitle>Add client</DialogTitle><SidebarMenuButton>Clients</SidebarMenuButton></>; }
+export const Example = () => { return <><DropdownMenuItem>Theme</DropdownMenuItem><EmptyTitle>No clients</EmptyTitle><TableCell>Client</TableCell><TooltipContent>Details</TooltipContent><DialogTitle>Add client</DialogTitle><SidebarMenuButton>Clients</SidebarMenuButton></>; };
 `,
   );
 
@@ -1376,4 +1388,46 @@ export function Example() { return ${expression}; }
       /ui-contracts|no-raw-colors|no-restyle/,
     );
   }
+});
+
+test("single-component primitive files retain exact styling and text-ownership contracts", (t) => {
+  const fixture = consumer(t);
+
+  const primitive =
+    "frontend/packages/ui/src/components/molecules/dropdown-menu/dropdown-menu-item.tsx";
+
+  const source = `/** Render the canonical menu item.
+ * @returns The owned menu control.
+ */
+export const DropdownMenuItem = () => <button className="rounded-[4px]">Save</button>;
+`;
+
+  fixture.write(primitive, source);
+  fixture.write(
+    "frontend/example.tsx",
+    `import { DropdownMenuItem } from "@repo/ui/components/molecules/dropdown-menu/dropdown-menu-item";
+
+/** Compose a directly imported canonical text-owning part.
+ * @returns The menu action.
+ */
+export const Example = () => <DropdownMenuItem>Save</DropdownMenuItem>;
+`,
+  );
+
+  const allowed = fixture.run("lint");
+
+  assert.equal(allowed.status, 0, allowed.stdout + allowed.stderr);
+  rmSync(join(fixture.directory, primitive));
+  fixture.write(
+    "frontend/packages/ui/src/components/molecules/dropdown-menu/custom-item.tsx",
+    source,
+  );
+
+  const rejected = fixture.run("lint");
+
+  assert.notEqual(rejected.status, 0);
+  assert.match(
+    rejected.stdout + rejected.stderr,
+    /ui-contracts|no-arbitrary-values/,
+  );
 });
