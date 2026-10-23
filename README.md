@@ -1,5 +1,18 @@
 # Preambient code rules
 
+## React component ownership
+
+Define at most one React component per file, using a `const` arrow function.
+This includes private and nested components, compound UI parts, Storybook example
+components, and async Next.js server components. Use a separate default export
+for named constants in route modules. Definition-free barrels may re-export
+compound parts; keep hooks, context, types, and helpers in component-free modules
+when shared across parts. Memo and forwardRef wrappers must bind to `const` and
+use arrow callbacks. Ordinary utilities, hooks, server functions, and inline
+render callbacks are not subject to the component declaration rule.
+The rules do not auto-fix declarations: splitting closures or changing function
+hoisting requires reviewing dependencies and client/server boundaries.
+
 Private, versioned Oxlint and Oxfmt policy published as
 `@preambient/code-rules` to GitHub Packages. This repository owns the settings;
 application repositories import a pinned release.

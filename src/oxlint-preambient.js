@@ -2,6 +2,7 @@ import { alphabeticalRules } from "#src/alphabetical";
 import base from "#src/oxlint";
 import backend from "#src/oxlint-backend";
 import frontend from "#src/oxlint-frontend";
+import { componentRules } from "#src/react-components";
 import { spacingRules } from "#src/spacing-rules";
 import { documentFiles, primitiveFiles } from "#src/ui-policy";
 import { createRequire } from "node:module";
@@ -13,7 +14,7 @@ const require = createRequire(import.meta.url);
 export default defineConfig({
   ...base,
   jsPlugins: [
-    ...base.jsPlugins,
+    ...frontend.jsPlugins,
     require.resolve("@shadcn/lint"),
     {
       name: "ui-policy",
@@ -81,7 +82,11 @@ export default defineConfig({
     },
     { files: ["backend/**"], plugins: backend.plugins, rules: backend.rules },
   ],
-  rules: { ...base.rules, "preambient/resource-event-modules": "error" },
+  rules: {
+    ...base.rules,
+    ...componentRules,
+    "preambient/resource-event-modules": "error",
+  },
   settings: {
     ...base.settings,
     shadcn: {
