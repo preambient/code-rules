@@ -15,7 +15,7 @@ jobs:
   publish:
     if: github.ref == 'refs/heads/main' && github.actor == 'davidosemwegie'
     runs-on: namespace-profile-preambient
-    timeout-minutes: 10
+    timeout-minutes: 20
     permissions:
       contents: read
       packages: write
