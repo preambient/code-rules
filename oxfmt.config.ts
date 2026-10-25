@@ -1,1 +1,1 @@
-export { default } from "@preambient/code-rules/oxfmt";
+export { default } from "@preambient-labs/code-rules/oxfmt";

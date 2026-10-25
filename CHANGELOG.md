@@ -3,11 +3,15 @@
 ## 0.11.0
 
 - **Breaking:** remove the GraphQL SDL checker, including the `./graphql` export,
-  the `graphql:check` CLI command, and the pinned `graphql` dependency. Pin 0.10.x
-  to keep using it.
+  the `graphql:check` CLI command, and the pinned `graphql` dependency. Pin
+  `@preambient/code-rules@0.10.x` to keep using it.
 - Remove the Preambient preset's ordering and spacing exemption for GraphQL Code
   Generator outputs.
-- License the package under MIT and publish it as a public GitHub Packages package.
+- **Breaking:** rename the package to `@preambient-labs/code-rules` and publish it
+  publicly to npmjs.org with provenance. Installs no longer need a registry token or
+  `.npmrc`. Update `oxlint.config.mts` and `oxfmt.config.mts` wrappers to the new
+  name; the CLI rejects the old wrapper contents.
+- License the package under MIT.
 - Rewrite the README for external adopters and move detailed rule documentation
   to `docs/rules/`.
 

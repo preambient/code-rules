@@ -25,10 +25,12 @@ function consumer(t) {
   const directory = mkdtempSync(join(tmpdir(), "preambient-policy-"));
 
   t.after(() => rmSync(directory, { force: true, recursive: true }));
-  mkdirSync(join(directory, "node_modules/@preambient"), { recursive: true });
+  mkdirSync(join(directory, "node_modules/@preambient-labs"), {
+    recursive: true,
+  });
   symlinkSync(
     packageRoot,
-    join(directory, "node_modules/@preambient/code-rules"),
+    join(directory, "node_modules/@preambient-labs/code-rules"),
     "dir",
   );
 

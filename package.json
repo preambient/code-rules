@@ -1,5 +1,5 @@
 {
-  "name": "@preambient/code-rules",
+  "name": "@preambient-labs/code-rules",
   "version": "0.11.0",
   "description": "Opinionated, versioned Oxlint and Oxfmt presets for TypeScript and React projects",
   "keywords": [
@@ -28,7 +28,9 @@
     "url": "https://github.com/preambient/code-rules/issues"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "access": "public",
+    "provenance": true,
+    "registry": "https://registry.npmjs.org/"
   },
   "files": [
     "src",

@@ -25,10 +25,12 @@ function consumer(t) {
   const directory = mkdtempSync(join(tmpdir(), "preambient-policy-"));
 
   t.after(() => rmSync(directory, { force: true, recursive: true }));
-  mkdirSync(join(directory, "node_modules/@preambient"), { recursive: true });
+  mkdirSync(join(directory, "node_modules/@preambient-labs"), {
+    recursive: true,
+  });
   symlinkSync(
     packageRoot,
-    join(directory, "node_modules/@preambient/code-rules"),
+    join(directory, "node_modules/@preambient-labs/code-rules"),
     "dir",
   );
 
@@ -165,7 +167,7 @@ test("edited wrappers and alternate root configs fail verification", (t) => {
   assert.notEqual(fixture.run("verify").status, 0);
   fixture.write(
     "oxlint.config.mts",
-    'export { default } from "@preambient/code-rules/oxlint/preambient";\n',
+    'export { default } from "@preambient-labs/code-rules/oxlint/preambient";\n',
   );
   fixture.write(".oxfmtrc.json", "{}\n");
   assert.notEqual(fixture.run("verify").status, 0);

@@ -14,11 +14,11 @@ const packageRoot =
 const require = createRequire(join(packageRoot, "package.json"));
 
 const frontend = (
-  await import(require.resolve("@preambient/code-rules/frontend"))
+  await import(require.resolve("@preambient-labs/code-rules/frontend"))
 ).default;
 
 const preambient = (
-  await import(require.resolve("@preambient/code-rules/oxlint/preambient"))
+  await import(require.resolve("@preambient-labs/code-rules/oxlint/preambient"))
 ).default;
 
 const rules = {

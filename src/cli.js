@@ -9,9 +9,9 @@ const require = createRequire(import.meta.url);
 
 const wrappers = {
   "oxfmt.config.mts":
-    'export { default } from "@preambient/code-rules/oxfmt/preambient";\n',
+    'export { default } from "@preambient-labs/code-rules/oxfmt/preambient";\n',
   "oxlint.config.mts":
-    'export { default } from "@preambient/code-rules/oxlint/preambient";\n',
+    'export { default } from "@preambient-labs/code-rules/oxlint/preambient";\n',
 };
 
 const conflicts = [
