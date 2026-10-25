@@ -1,9 +1,7 @@
-import { alphabeticalRules } from "#src/alphabetical";
 import base from "#src/oxlint";
 import backend from "#src/oxlint-backend";
 import frontend from "#src/oxlint-frontend";
 import { componentRules } from "#src/react-components";
-import { spacingRules } from "#src/spacing-rules";
 import { documentFiles, primitiveFiles } from "#src/ui-policy";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
@@ -62,23 +60,6 @@ export default defineConfig({
         "shadcn/no-inline-styles": "off",
         "ui-policy/ui-contracts": "off",
       },
-    },
-    // GraphQL Code Generator owns declaration, object-key and whitespace order.
-    // Keep correctness, import, security and UI contracts enabled on these outputs.
-    {
-      files: [
-        "frontend/apps/console/lib/graphql/generated.ts",
-        "frontend/apps/platform/lib/graphql/generated.ts",
-      ],
-      rules: Object.fromEntries(
-        [...Object.keys(alphabeticalRules), ...Object.keys(spacingRules)].map(
-          /** Leave generated layout to the pinned generator and formatter.
-           * @param name - Shared ordering or spacing rule.
-           * @returns The narrow generated-file override.
-           */
-          (name) => [name, "off"],
-        ),
-      ),
     },
     { files: ["backend/**"], plugins: backend.plugins, rules: backend.rules },
   ],

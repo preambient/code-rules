@@ -1094,37 +1094,6 @@ export const Example = ({ labels, Query }: { labels: string[]; Query: any }) => 
   assert.equal(result.status, 0, result.stdout + result.stderr);
 });
 
-test("generated GraphQL ordering exceptions retain correctness and stay narrowly scoped", (t) => {
-  const fixture = consumer(t);
-
-  for (const app of ["console", "platform"])
-    fixture.write(
-      `frontend/apps/${app}/lib/graphql/generated.ts`,
-      "export const document = { z: 1, a: 2 };\n",
-    );
-
-  const allowed = fixture.run("lint");
-
-  assert.equal(allowed.status, 0, allowed.stdout + allowed.stderr);
-  fixture.write(
-    "frontend/apps/console/lib/graphql/generated.ts",
-    "export const document = { z: 1, a: 2 }; document = {};\n",
-  );
-  fixture.write(
-    "frontend/apps/console/lib/graphql/handwritten.ts",
-    "export const document = { z: 1, a: 2 };\n",
-  );
-
-  const rejected = fixture.run("lint");
-
-  assert.notEqual(rejected.status, 0);
-  assert.match(rejected.stdout + rejected.stderr, /no-const-assign/u);
-  assert.match(
-    rejected.stdout + rejected.stderr,
-    /handwritten.ts.*sort-objects/u,
-  );
-});
-
 test("UI contracts reject text and component styling escapes across composition levels", async (t) => {
   const cases = {
     "bare text": "<div>Hello</div>",

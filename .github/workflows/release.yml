@@ -36,13 +36,13 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run check
       - run: bash scripts/test-package.sh
-      - name: Publish private package
+      - name: Publish package
         run: npm publish --ignore-scripts
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Verify published package and private visibility
+      - name: Verify published package and public visibility
         run: |
           bash scripts/test-published.sh
-          test "$(gh api /orgs/preambient/packages/npm/code-rules --jq .visibility)" = private
+          test "$(gh api /orgs/preambient/packages/npm/code-rules --jq .visibility)" = public
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
