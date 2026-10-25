@@ -3,6 +3,7 @@ import backend from "#src/oxlint-backend";
 import frontend from "#src/oxlint-frontend";
 import { componentRules } from "#src/react-components";
 import { documentFiles, primitiveFiles } from "#src/ui-policy";
+import { frontendDirectories } from "#src/ui-styles";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "oxlint";
@@ -25,7 +26,7 @@ export default defineConfig({
   ],
   overrides: [
     {
-      files: ["frontend/**", "internal/apps/**"],
+      files: frontendDirectories.map((directory) => `${directory}/**`),
       plugins: frontend.plugins,
       rules: {
         ...frontend.rules,
@@ -61,7 +62,15 @@ export default defineConfig({
         "ui-policy/ui-contracts": "off",
       },
     },
-    { files: ["backend/**"], plugins: backend.plugins, rules: backend.rules },
+    {
+      files: [
+        "apps/agent-runtime-worker/**",
+        "apps/documents-worker/**",
+        "packages/backend/**",
+      ],
+      plugins: backend.plugins,
+      rules: backend.rules,
+    },
   ],
   rules: {
     ...base.rules,
@@ -71,9 +80,9 @@ export default defineConfig({
   settings: {
     ...base.settings,
     shadcn: {
-      componentImports: ["^@repo/ui(/|$)"],
-      note: "Use component variants and sizes. Component appearance belongs in frontend/packages/ui; only placement/layout may change at call sites.",
-      ui: "@repo/ui/components",
+      componentImports: ["^@workspace/ui(/|$)"],
+      note: "Use component variants and sizes. Component appearance belongs in packages/ui; only placement/layout may change at call sites.",
+      ui: "@workspace/ui/components",
     },
   },
 });
