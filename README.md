@@ -44,7 +44,7 @@ Install one exact version and import one preset. Every repository then follows t
 **2. Install an exact version**, along with the matching tool versions:
 
 ```bash
-bun add --dev --exact @preambient/code-rules@0.11.0 oxlint@1.86.0 oxfmt@0.72.0
+bun add --dev --exact @preambient/code-rules@0.12.0 oxlint@1.86.0 oxfmt@0.72.0
 ```
 
 **3. Pick a preset:**
