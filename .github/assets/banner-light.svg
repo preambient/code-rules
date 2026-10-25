@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="400" viewBox="0 0 1280 400" role="img" aria-label="@preambient/code-rules: opinionated Oxlint and Oxfmt presets">
+  <defs>
+    <pattern id="g" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#ECEAE3" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1280" height="400" rx="24" fill="#FAFAF7"/>
+  <rect width="1280" height="400" rx="24" fill="url(#g)"/>
+  <rect x="0.5" y="0.5" width="1279" height="399" rx="24" fill="none" stroke="#E2E0D8"/>
+  <g font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+    <text x="80" y="150" font-size="28" font-weight="500" fill="#6B6B76">@preambient/</text>
+    <text x="76" y="232" font-size="92" font-weight="800" letter-spacing="-3" fill="#16161A">code-rules</text>
+    <rect x="82" y="258" width="64" height="6" rx="3" fill="#E8590C"/>
+    <text x="80" y="310" font-size="26" fill="#6B6B76">Opinionated Oxlint + Oxfmt presets.</text>
+    <text x="80" y="346" font-size="26" fill="#6B6B76">One pinned version. Zero bikeshedding.</text>
+  </g>
+  <g transform="translate(720 72)">
+    <rect width="488" height="256" rx="16" fill="#16161A"/>
+    <circle cx="28" cy="28" r="7" fill="#FF5F57"/>
+    <circle cx="52" cy="28" r="7" fill="#FEBC2E"/>
+    <circle cx="76" cy="28" r="7" fill="#28C840"/>
+    <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="20">
+      <text x="28" y="92" fill="#8A8A96">$ <tspan fill="#F4F4F0">oxlint &amp;&amp; oxfmt --check</tspan></text>
+      <text x="28" y="136" fill="#3FB950">✓ <tspan fill="#F4F4F0">imports sorted</tspan></text>
+      <text x="28" y="168" fill="#3FB950">✓ <tspan fill="#F4F4F0">exports documented</tspan></text>
+      <text x="28" y="200" fill="#3FB950">✓ <tspan fill="#F4F4F0">one component per file</tspan></text>
+      <text x="28" y="232" fill="#3FB950">✓ <tspan fill="#F4F4F0">formatted</tspan> <tspan fill="#8A8A96">· 0 problems</tspan></text>
+    </g>
+  </g>
+</svg>

@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.11.0
+
+- **Breaking:** remove the GraphQL SDL checker, including the `./graphql` export,
+  the `graphql:check` CLI command, and the pinned `graphql` dependency. Pin 0.10.x
+  to keep using it.
+- Remove the Preambient preset's ordering and spacing exemption for GraphQL Code
+  Generator outputs.
+- License the package under MIT and publish it as a public GitHub Packages package.
+- Rewrite the README for external adopters and move detailed rule documentation
+  to `docs/rules/`.
+
 ## 0.10.0
 
 - Require one React component definition per file, including compound primitives,
