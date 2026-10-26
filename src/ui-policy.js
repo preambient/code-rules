@@ -449,7 +449,7 @@ const typographyClass =
   /^(?:text-|font-|leading-|tracking-|decoration-|underline|overline|line-through|no-underline|italic|not-italic|uppercase|lowercase|capitalize|normal-case|antialiased|subpixel-antialiased|prose(?:-|$))/u;
 
 const placementClass =
-  /^(?:(?:-?m[trblxyse]?|w|min-w|max-w|inset(?:-[xy])?|top|bottom|left|right|start|end|z|order|col|row|basis|self|justify-self|place-self|gap|gap-x|gap-y|grid-cols|grid-rows|col-span|row-span)-|(?:block|inline|inline-block|flex|inline-flex|grid|inline-grid|hidden|contents|relative|absolute|fixed|sticky|static|grow|shrink|flex-1|flex-auto|flex-none|flex-col|flex-row|flex-wrap|items-start|items-center|items-end|justify-start|justify-center|justify-end|justify-between)$)/u;
+  /^(?:(?:-?m[trblxyse]?|w|min-w|max-w|inset(?:-[xy])?|top|bottom|left|right|start|end|z|order|col|row|basis|self|justify-self|place-self|gap|gap-x|gap-y|grid-cols|grid-rows|col-span|row-span)-|(?:block|inline|inline-block|flex|inline-flex|grid|inline-grid|hidden|contents|relative|absolute|fixed|sticky|static|grow|grow-0|shrink|shrink-0|min-h-0|flex-1|flex-auto|flex-none|flex-col|flex-row|flex-wrap|items-start|items-center|items-end|justify-start|justify-center|justify-end|justify-between)$)/u;
 
 /** Build the UI AST visitors used by the Preambient preset.
  * @param context - Oxlint-compatible ESLint context.
@@ -819,7 +819,8 @@ function create(context) {
       const info = identity(node.parent.name);
 
       if (name === "style") {
-        context.report({ messageId: "style", node });
+        if (!customProperties(node.value))
+          context.report({ messageId: "style", node });
         return;
       }
 
@@ -905,6 +906,26 @@ function create(context) {
 }
 
 const sharedSlots = new Map();
+
+/** Decide whether a style attribute only passes dynamic values to classes through CSS custom properties.
+ * @param value - JSX attribute value.
+ * @returns Whether every property is a statically named `--*` custom property.
+ */
+function customProperties(value) {
+  const object = value?.type === "JSXExpressionContainer" && value.expression;
+
+  return (
+    object?.type === "ObjectExpression" &&
+    object.properties.length > 0 &&
+    object.properties.every(
+      (property) =>
+        property.type === "Property" &&
+        !property.computed &&
+        typeof property.key.value === "string" &&
+        property.key.value.startsWith("--"),
+    )
+  );
+}
 
 /** Read ReactNode members of a props type exported by a shared UI module, such as a compound part's shared file.
  * @param root - Consumer project directory.

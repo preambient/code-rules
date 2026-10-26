@@ -24,7 +24,9 @@ Direct lower-level primitive imports and raw React `createElement` text/controls
 are checked too. The CLI ignores nested Oxlint configurations so they cannot
 disable the root contract. Native control recreation, inline styles, and typography utility classes on
 layout containers are rejected. Import aliases and simple component aliases are
-resolved; conditional/constant class expressions are inspected.
+resolved; conditional/constant class expressions are inspected. A `style` object that only
+sets CSS custom properties (`style={{ "--page-height": height }}`) is allowed so
+runtime values can reach classes such as `h-(--page-height)`.
 
 A function may forward slots explicitly typed `ReactNode` (including optional
 slots in either union order, props type aliases, `Readonly`, `PropsWithChildren`,

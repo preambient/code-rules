@@ -1160,6 +1160,8 @@ test("UI contracts reject text and component styling escapes across composition 
     "mapped parenthesized strings":
       '<div>{["one", "two"].map((value) => (value))}</div>',
     "mapped strings": '<div>{["one", "two"].map((value) => value)}</div>',
+    "mixed custom property style":
+      '<div style={{ "--size": "1px", width: 1 }}><Copy>Hello</Copy></div>',
     "native button": '<button type="button">Save</button>',
     "native input": '<input aria-label="Name" />',
     "nested untyped children":
@@ -1476,7 +1478,7 @@ import { MessageScrollerButton } from "@workspace/ui/components/organisms/messag
 /** Compose the registered text-owning parts.
  * @returns Canonical chat and disclosure parts with their own copy.
  */
-export const Example = () => { return <><AttachmentTitle>report.pdf</AttachmentTitle><BubbleContent>Hello</BubbleContent><CodeBlockTitle>index.ts</CodeBlockTitle><CollapsibleTrigger>Details</CollapsibleTrigger><HoverCardTrigger>Ada</HoverCardTrigger><LoadingButton className="mt-2">Save</LoadingButton><MessageHeader>Ada</MessageHeader><PopoverTrigger>Open</PopoverTrigger><TraceTitle>Searching</TraceTitle><MessageScrollerButton>Latest</MessageScrollerButton></>; };
+export const Example = () => { return <><AttachmentTitle>report.pdf</AttachmentTitle><BubbleContent>Hello</BubbleContent><CodeBlockTitle>index.ts</CodeBlockTitle><CollapsibleTrigger>Details</CollapsibleTrigger><HoverCardTrigger>Ada</HoverCardTrigger><LoadingButton className="mt-2 min-h-0 shrink-0 grow-0">Save</LoadingButton><MessageHeader>Ada</MessageHeader><PopoverTrigger>Open</PopoverTrigger><TraceTitle>Searching</TraceTitle><MessageScrollerButton>Latest</MessageScrollerButton></>; };
 `,
   );
 
@@ -1572,6 +1574,7 @@ export const Example = ({ icon, rows }: { icon: null | ReactNode; rows: string[]
       })}
       {rows.flatMap((row) => (row ? [<div key={row}>{icon}</div>] : []))}
       {Array.from(rows, (row) => (<div key={row}>{icon}</div>))}
+      <div className="h-(--row-height)" style={{ "--row-height": String(rows.length) + "rem" }} />
     </div>
   );
 };
