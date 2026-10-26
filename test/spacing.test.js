@@ -71,8 +71,8 @@ gamma();
 `;
 
   for (const file of [
-    "apps/console/example.ts",
-    "packages/backend/example.ts",
+    "frontend/example.ts",
+    "backend/example.ts",
     "shared/example.ts",
   ]) {
     fixture.write(file, source);
@@ -90,8 +90,8 @@ gamma();
 
   assert.equal(fixed.status, 0, fixed.stdout + fixed.stderr);
   for (const file of [
-    "apps/console/example.ts",
-    "packages/backend/example.ts",
+    "frontend/example.ts",
+    "backend/example.ts",
     "shared/example.ts",
   ]) {
     assert.equal(
@@ -260,21 +260,7 @@ test("JSDoc between object and class members is separated and survives formattin
   const fixture = consumer(t);
 
   const sources = {
-    "apps/console/class.ts": `/** Reader with independent public operations. */
-class Reader {
-  /** Read the initial value.
-   * @returns The initial numeric value.
-   */
-  alpha() { return 1; }
-  /** Read the subsequent value.
-   * @returns The subsequent numeric value.
-   */
-  beta() { return 2; }
-}
-
-void Reader;
-`,
-    "packages/backend/object.ts": `function transaction(action: () => Promise<string[]>) { return action(); }
+    "backend/object.ts": `function transaction(action: () => Promise<string[]>) { return action(); }
 
 /** Batch readers with documented public operations. */
 const operations = {
@@ -293,6 +279,20 @@ const operations = {
 };
 
 void operations;
+`,
+    "frontend/class.ts": `/** Reader with independent public operations. */
+class Reader {
+  /** Read the initial value.
+   * @returns The initial numeric value.
+   */
+  alpha() { return 1; }
+  /** Read the subsequent value.
+   * @returns The subsequent numeric value.
+   */
+  beta() { return 2; }
+}
+
+void Reader;
 `,
     "shared/statements.ts": `/** First statement remains at the file start. */
 void 1;

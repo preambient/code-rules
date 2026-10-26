@@ -1,6 +1,6 @@
 {
   "name": "@preambient-labs/code-rules",
-  "version": "0.12.0",
+  "version": "0.11.0",
   "description": "Opinionated, versioned Oxlint and Oxfmt presets for TypeScript and React projects",
   "keywords": [
     "oxlint",

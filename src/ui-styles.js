@@ -3,26 +3,18 @@ import { join, relative } from "node:path";
 import postcss from "postcss";
 
 const stylesheets = new Set([
-  "packages/ui/.storybook/preview.css",
-  "packages/ui/src/styles/globals.css",
-  "packages/ui/src/styles/typeset.css",
-  "packages/ui/src/styles/typography.css",
+  "frontend/packages/ui/.storybook/preview.css",
+  "frontend/packages/ui/src/styles/globals.css",
+  "frontend/packages/ui/src/styles/typeset.css",
+  "frontend/packages/ui/src/styles/typography.css",
 ]);
 
 // next-intl augments its public interface; a type alias cannot merge declarations.
 const suppressionExceptions = {
-  "packages/i18n/src/frontend/index.ts": new Set([
+  "frontend/packages/i18n/src/frontend/index.ts": new Set([
     "oxlint-disable-next-line typescript/consistent-type-definitions",
   ]),
 };
-
-// Directories that hold React application and UI source in the Preambient monorepo.
-const frontendDirectories = [
-  "apps/console",
-  "apps/platform",
-  "packages/i18n/src/frontend",
-  "packages/ui",
-];
 
 const generated = new Set([
   ".git",
@@ -104,9 +96,9 @@ function checkUiStyles(root) {
     }
   }
 
-  for (const directory of frontendDirectories)
+  for (const directory of ["frontend", "internal/apps"])
     if (existsSync(join(root, directory))) visit(join(root, directory));
   return diagnostics;
 }
 
-export { checkUiStyles, frontendDirectories };
+export { checkUiStyles };
