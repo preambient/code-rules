@@ -1,1 +1,1 @@
-export { default } from "@preambient/code-rules/base";
+export { default } from "@preambient-labs/code-rules/base";

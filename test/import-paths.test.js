@@ -14,18 +14,18 @@ const packageRoot =
 const require = createRequire(join(packageRoot, "package.json"));
 
 const backend = (
-  await import(require.resolve("@preambient/code-rules/backend"))
+  await import(require.resolve("@preambient-labs/code-rules/backend"))
 ).default;
 
-const base = (await import(require.resolve("@preambient/code-rules/base")))
+const base = (await import(require.resolve("@preambient-labs/code-rules/base")))
   .default;
 
 const frontend = (
-  await import(require.resolve("@preambient/code-rules/frontend"))
+  await import(require.resolve("@preambient-labs/code-rules/frontend"))
 ).default;
 
 const preambient = (
-  await import(require.resolve("@preambient/code-rules/oxlint/preambient"))
+  await import(require.resolve("@preambient-labs/code-rules/oxlint/preambient"))
 ).default;
 
 const binary = join(

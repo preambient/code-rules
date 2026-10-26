@@ -25,10 +25,12 @@ function consumer(t) {
   const directory = mkdtempSync(join(tmpdir(), "preambient-policy-"));
 
   t.after(() => rmSync(directory, { force: true, recursive: true }));
-  mkdirSync(join(directory, "node_modules/@preambient"), { recursive: true });
+  mkdirSync(join(directory, "node_modules/@preambient-labs"), {
+    recursive: true,
+  });
   symlinkSync(
     packageRoot,
-    join(directory, "node_modules/@preambient/code-rules"),
+    join(directory, "node_modules/@preambient-labs/code-rules"),
     "dir",
   );
 
@@ -79,11 +81,8 @@ test("format fixes ordinary strings and preserves interpolation", (t) => {
 test("backend console rule remains active even with a nested override", (t) => {
   const fixture = consumer(t);
 
-  fixture.write("packages/backend/example.ts", 'console.log("example");\n');
-  fixture.write(
-    "packages/backend/.oxlintrc.json",
-    '{"rules":{"no-console":"off"}}\n',
-  );
+  fixture.write("backend/example.ts", 'console.log("example");\n');
+  fixture.write("backend/.oxlintrc.json", '{"rules":{"no-console":"off"}}\n');
 
   const result = fixture.run("lint");
 
@@ -91,60 +90,23 @@ test("backend console rule remains active even with a nested override", (t) => {
   assert.match(result.stdout + result.stderr, /no-console/);
 });
 
-test("frontend and backend rules follow the monorepo application layout", (t) => {
-  const fixture = consumer(t);
-
-  const control = "export const control = <button />;\n";
-
-  for (const directory of [
-    "apps/console",
-    "apps/platform",
-    "packages/i18n/src/frontend",
-    "packages/ui/src",
-  ]) {
-    fixture.write(`${directory}/control.tsx`, control);
-
-    const rejected = fixture.run("lint");
-
-    assert.notEqual(rejected.status, 0, directory);
-    assert.match(rejected.stdout + rejected.stderr, /ui-contracts/, directory);
-    rmSync(join(fixture.directory, `${directory}/control.tsx`));
-  }
-  for (const directory of ["frontend", "packages/logger/src"])
-    fixture.write(`${directory}/control.tsx`, control);
-
-  const shared = fixture.run("lint");
-
-  assert.equal(shared.status, 0, shared.stdout + shared.stderr);
-  for (const directory of [
-    "apps/agent-runtime-worker",
-    "apps/documents-worker/src",
-    "packages/backend/convex",
-  ]) {
-    fixture.write(`${directory}/example.ts`, 'console.log("example");\n');
-
-    const rejected = fixture.run("lint");
-
-    assert.notEqual(rejected.status, 0, directory);
-    assert.match(rejected.stdout + rejected.stderr, /no-console/, directory);
-    rmSync(join(fixture.directory, `${directory}/example.ts`));
-  }
-});
-
 test("component appearance is rejected in compositions and allowed only in registered primitive files", (t) => {
   const fixture = consumer(t);
 
   const source =
-    'import { Button } from "@workspace/ui/components/button";\n\n/** Render the fixture button.\n * @returns The example button element.\n */\nexport const Example = () => { return <Button className="rounded-full">Save</Button>; };\n';
+    'import { Button } from "@repo/ui/components/button";\n\n/** Render the fixture button.\n * @returns The example button element.\n */\nexport const Example = () => { return <Button className="rounded-full">Save</Button>; };\n';
 
-  fixture.write("apps/console/example.tsx", source);
+  fixture.write("frontend/example.tsx", source);
 
   const rejected = fixture.run("lint");
 
   assert.notEqual(rejected.status, 0);
   assert.match(rejected.stdout + rejected.stderr, /no-restyle/);
-  rmSync(join(fixture.directory, "apps/console/example.tsx"));
-  fixture.write("packages/ui/src/components/pages/example.tsx", source);
+  rmSync(join(fixture.directory, "frontend/example.tsx"));
+  fixture.write(
+    "frontend/packages/ui/src/components/pages/example.tsx",
+    source,
+  );
 
   const composition = fixture.run("lint");
 
@@ -154,9 +116,12 @@ test("component appearance is rejected in compositions and allowed only in regis
     /no-restyle|ui-contracts/,
   );
   rmSync(
-    join(fixture.directory, "packages/ui/src/components/pages/example.tsx"),
+    join(
+      fixture.directory,
+      "frontend/packages/ui/src/components/pages/example.tsx",
+    ),
   );
-  fixture.write("packages/ui/src/components/atoms/button.tsx", source);
+  fixture.write("frontend/packages/ui/src/components/atoms/button.tsx", source);
 
   const accepted = fixture.run("lint");
 
@@ -166,7 +131,11 @@ test("component appearance is rejected in compositions and allowed only in regis
 test("formatter exclusions are relative to the consumer root", (t) => {
   const fixture = consumer(t);
 
-  fixture.write("apps/console/typeset.css", "invalid {{{");
+  fixture.write(
+    "backend/packages/db/.drizzle/generated.ts",
+    "invalid ~~~ code",
+  );
+  fixture.write("frontend/typeset.css", "invalid {{{");
 
   const result = fixture.run("format:check");
 
@@ -178,12 +147,12 @@ test("generated Next.js declarations are excluded but handwritten imports are ch
 
   const source = 'import "./.next/types/routes.d.ts";\n';
 
-  fixture.write("apps/platform/next-env.d.ts", source);
+  fixture.write("frontend/apps/dashboard/next-env.d.ts", source);
 
   const accepted = fixture.run("lint");
 
   assert.equal(accepted.status, 0, accepted.stdout + accepted.stderr);
-  fixture.write("apps/platform/handwritten.ts", source);
+  fixture.write("frontend/apps/dashboard/handwritten.ts", source);
 
   const rejected = fixture.run("lint");
 
@@ -198,7 +167,7 @@ test("edited wrappers and alternate root configs fail verification", (t) => {
   assert.notEqual(fixture.run("verify").status, 0);
   fixture.write(
     "oxlint.config.mts",
-    'export { default } from "@preambient/code-rules/oxlint/preambient";\n',
+    'export { default } from "@preambient-labs/code-rules/oxlint/preambient";\n',
   );
   fixture.write(".oxfmtrc.json", "{}\n");
   assert.notEqual(fixture.run("verify").status, 0);
@@ -259,7 +228,7 @@ test("alphabetical policy covers every Perfectionist structure through Oxlint", 
     await t.test(rule, (t) => {
       const fixture = consumer(t);
 
-      fixture.write("apps/console/example.tsx", source);
+      fixture.write("frontend/example.tsx", source);
 
       const result = fixture.run("lint");
 
@@ -274,7 +243,7 @@ test("alphabetical policy covers every Perfectionist structure through Oxlint", 
     const fixture = consumer(t);
 
     fixture.write(
-      "apps/console/example.ts",
+      "frontend/example.ts",
       'import { zebra, alpha } from "example";\n\nexport { alpha, zebra };',
     );
 
@@ -329,7 +298,7 @@ test("frontend JSX rules do not leak into backend files", (t) => {
   const source =
     'export const Example = () => { return <div title="z" id="a" />; };';
 
-  fixture.write("packages/backend/example.tsx", source);
+  fixture.write("backend/example.tsx", source);
 
   const result = fixture.run("lint");
 
@@ -367,8 +336,8 @@ test("type aliases are required in frontend, backend, and shared code", (t) => {
   const fixture = consumer(t);
 
   for (const file of [
-    "apps/console/example.ts",
-    "packages/backend/example.ts",
+    "frontend/example.ts",
+    "backend/example.ts",
     "shared/example.ts",
   ]) {
     fixture.write(file, "export interface Example { value: string; }\n");
@@ -471,13 +440,13 @@ test("JSDoc is required for exported implementations and validates descriptions"
   ];
 
   for (const [undocumented, documented] of cases) {
-    fixture.write("apps/console/example.ts", undocumented);
+    fixture.write("frontend/example.ts", undocumented);
 
     const rejected = fixture.run("lint");
 
     assert.notEqual(rejected.status, 0, undocumented);
     assert.match(rejected.stdout + rejected.stderr, /jsdoc-js/, undocumented);
-    fixture.write("apps/console/example.ts", documented);
+    fixture.write("frontend/example.ts", documented);
 
     const accepted = fixture.run("lint");
 
@@ -493,12 +462,12 @@ test("documentation checks apply to every runtime, helpers, and tests without ad
   const fixture = consumer(t);
 
   for (const file of [
-    "packages/backend/helper.ts",
-    "apps/console/helper.tsx",
+    "backend/helper.ts",
+    "frontend/helper.tsx",
     "shared/helper.ts",
     "internal/helper.ts",
-    "packages/backend/test/helper.test.ts",
-    "apps/documents-worker/src/helper.ts",
+    "backend/test/helper.test.ts",
+    "internal/apps/admin-dashboard/helper.ts",
   ]) {
     const source = "export const helper = () => 1;\n";
 
@@ -525,8 +494,8 @@ test("formatting preserves JSDoc on cast arrows and JSX callbacks", (t) => {
   const fixture = consumer(t);
 
   fixture.write(
-    "apps/console/example.tsx",
-    `import { Button } from "@workspace/ui/components/atoms/button";
+    "frontend/example.tsx",
+    `import { Button } from "@repo/ui/components/atoms/button";
 
 export const value = /** Return the numeric fixture value.
  * @returns The numeric example value.
@@ -559,7 +528,7 @@ test("standard JSDoc tags and optional type annotations are accepted", (t) => {
   const fixture = consumer(t);
 
   fixture.write(
-    "apps/console/example.ts",
+    "frontend/example.ts",
     `/**
  * @description Increment the provided numeric value.
  * @param {number} value - Value to increment.
@@ -625,19 +594,19 @@ test("parameter and result tags must describe the real signature without generat
   ];
 
   for (const [source, diagnostic] of cases) {
-    fixture.write("apps/console/example.ts", source);
+    fixture.write("frontend/example.ts", source);
 
     const rejected = fixture.run("lint:fix");
 
     assert.notEqual(rejected.status, 0, source);
     assert.match(rejected.stdout + rejected.stderr, diagnostic);
     assert.equal(
-      readFileSync(join(fixture.directory, "apps/console/example.ts"), "utf8"),
+      readFileSync(join(fixture.directory, "frontend/example.ts"), "utf8"),
       source,
     );
   }
   fixture.write(
-    "apps/console/example.ts",
+    "frontend/example.ts",
     `/** Read a count from an options object.
  * @param options - Options containing the count to read.
  * @returns Configured count.
@@ -720,7 +689,7 @@ export function reader() { return () => 1; }`,
   #read = () => 1;
   private normalize(value: string) { return value.trim(); }
 }`,
-    `import { Button } from "@workspace/ui/components/atoms/button";
+    `import { Button } from "@repo/ui/components/atoms/button";
 
 declare function useEffect(callback: () => (() => void), dependencies: unknown[]): void;
 
@@ -734,7 +703,7 @@ export const View = () => {
   ];
 
   for (const source of cases) {
-    fixture.write("apps/console/example.tsx", source);
+    fixture.write("frontend/example.tsx", source);
 
     const accepted = fixture.run("lint");
 
@@ -755,7 +724,7 @@ test("separately exported functions and public methods still require complete do
     "const api = { read: () => 1 };\n\nexport { api };",
     "export class Api { read() { return 1; } }",
   ]) {
-    fixture.write("apps/console/example.ts", source);
+    fixture.write("frontend/example.ts", source);
 
     const rejected = fixture.run("lint");
 
@@ -763,7 +732,7 @@ test("separately exported functions and public methods still require complete do
     assert.match(rejected.stdout + rejected.stderr, /require-jsdoc/);
   }
   fixture.write(
-    "apps/console/example.ts",
+    "frontend/example.ts",
     `/** Read the stored number.
  * @returns Stored numeric value.
  */
@@ -787,7 +756,7 @@ test("export traversal follows API aliases without turning data callbacks into A
     "declare const flag: boolean;\n\nexport const read = flag ? () => 1 : () => 2;",
     "declare const read: (() => number) | undefined;\n\nexport const fallback = read ?? (() => 1);",
   ]) {
-    fixture.write("apps/console/example.ts", source);
+    fixture.write("frontend/example.ts", source);
 
     const rejected = fixture.run("lint");
 
@@ -795,7 +764,7 @@ test("export traversal follows API aliases without turning data callbacks into A
     assert.match(rejected.stdout + rejected.stderr, /require-jsdoc/);
   }
   fixture.write(
-    "apps/console/example.ts",
+    "frontend/example.ts",
     `export const origins = [" localhost "].map((origin) => origin.trim());
 
 export const ready = Promise.resolve().then(() => 1);
@@ -843,7 +812,7 @@ test("optional private JSDoc is validated when supplied", (t) => {
   const fixture = consumer(t);
 
   fixture.write(
-    "apps/console/example.ts",
+    "frontend/example.ts",
     "/** Normalize a local value. */\nconst trim = (value: string) => value.trim();\n\nexport const normalized = trim(' value ');",
   );
 
@@ -853,7 +822,7 @@ test("optional private JSDoc is validated when supplied", (t) => {
   assert.match(rejected.stdout + rejected.stderr, /require-param/);
   assert.match(rejected.stdout + rejected.stderr, /require-returns/);
   fixture.write(
-    "apps/console/example.ts",
+    "frontend/example.ts",
     "// Normalize before calling the downstream service.\nconst trim = (value: string) => value.trim();\n\nexport const normalized = trim(' value ');",
   );
 
@@ -875,7 +844,7 @@ test("static member and destructured exports select only exposed implementations
     "const api = {};\n\nexport const { read = () => 1 } = api;",
     "const callbacks = [() => 1, () => 2];\n\nconst [read] = callbacks;\n\nexport { read };",
   ]) {
-    fixture.write("apps/console/example.ts", source);
+    fixture.write("frontend/example.ts", source);
 
     const rejected = fixture.run("lint");
 
@@ -888,7 +857,7 @@ test("static member and destructured exports select only exposed implementations
     );
   }
   fixture.write(
-    "apps/console/example.ts",
+    "frontend/example.ts",
     "const api = { get value() { return 1; } };\n\nexport const value = api.value;",
   );
 
@@ -903,7 +872,7 @@ test("static member and destructured exports select only exposed implementations
     "const { read: selected } = api;\n\nexport { selected };",
   ]) {
     fixture.write(
-      "apps/console/example.ts",
+      "frontend/example.ts",
       `const api = {
   helper: () => 2,
 
@@ -973,7 +942,7 @@ test("local runtime module and exports bindings are not CommonJS exports", (t) =
     'import exports from "example";\n\nexports.read = () => 1;\n\nexport const marker = 1;',
     'import module from "example";\n\nmodule.exports.read = () => 1;\n\nexport const marker = 1;',
   ]) {
-    fixture.write("apps/console/example.ts", source);
+    fixture.write("frontend/example.ts", source);
 
     const accepted = fixture.run("lint");
 
@@ -987,7 +956,7 @@ test("local runtime module and exports bindings are not CommonJS exports", (t) =
     "type module = number; module.exports = () => 1;",
     'import type { module } from "example";\n\nmodule.exports = () => 1;',
   ]) {
-    fixture.write("apps/console/example.ts", source);
+    fixture.write("frontend/example.ts", source);
 
     const rejected = fixture.run("lint");
 
@@ -1009,13 +978,10 @@ test("event modules require resource names across authored JavaScript and TypeSc
     "mts",
     "cts",
   ]) {
-    fixture.write(
-      `packages/backend/organizations/events.${extension}`,
-      "export {};\n",
-    );
+    fixture.write(`backend/organizations/events.${extension}`, "export {};\n");
   }
 
-  fixture.write("apps/console/events.tsx", "export {};\n");
+  fixture.write("frontend/events.tsx", "export {};\n");
   fixture.write("shared/events.mts", "export {};\n");
 
   const rejected = fixture.run("lint");
@@ -1043,7 +1009,7 @@ test("event modules require resource names across authored JavaScript and TypeSc
 
   assert.notEqual(fixed.status, 0);
   assert.match(fixed.stdout + fixed.stderr, /resource-event-modules/);
-  fixture.write("packages/backend/organizations/events.ts", "");
+  fixture.write("backend/organizations/events.ts", "");
 
   const empty = fixture.run("lint");
 
@@ -1055,12 +1021,12 @@ test("resource event filenames and event directories remain valid in every runti
   const fixture = consumer(t);
 
   for (const file of [
-    "packages/backend/organizations/organization.events.ts",
-    "packages/backend/notifications/notification.events.ts",
-    "packages/backend/events/index.ts",
-    "packages/backend/types.ts",
-    "apps/console/events/index.tsx",
-    "apps/console/organization.events.jsx",
+    "backend/organizations/organization.events.ts",
+    "backend/notifications/notification.events.ts",
+    "backend/events/index.ts",
+    "backend/types.ts",
+    "frontend/events/index.tsx",
+    "frontend/organization.events.jsx",
     "shared/organization.events.mts",
     "shared/notification.events.cts",
     "dist/events.ts",
@@ -1077,7 +1043,7 @@ test("UI contracts accept semantic Typography, atomic owners, aliases, and decla
   const fixture = consumer(t);
 
   fixture.write(
-    "apps/console/arrange.tsx",
+    "frontend/arrange.tsx",
     `import type { ReactNode } from "react";
 
 type Slots = { children: ReactNode; hint?: ReactNode };
@@ -1090,9 +1056,9 @@ export const Arrange = ({ children, hint }: Readonly<Slots>) => { return <div>{c
 `,
   );
   fixture.write(
-    "apps/console/example.tsx",
-    `import { Button as Action } from "@workspace/ui/components/atoms/button";
-import * as Text from "@workspace/ui/components/atoms/typography";
+    "frontend/example.tsx",
+    `import { Button as Action } from "@repo/ui/components/atoms/button";
+import * as Text from "@repo/ui/components/atoms/typography";
 
 const Copy = Text.Typography.p;
 
@@ -1112,8 +1078,8 @@ test("UI contracts accept JSX render props and parenthesized mapped elements", (
   const fixture = consumer(t);
 
   fixture.write(
-    "apps/console/example.tsx",
-    `import { Typography } from "@workspace/ui/components/atoms/typography";
+    "frontend/example.tsx",
+    `import { Typography } from "@repo/ui/components/atoms/typography";
 
 /** Compose a streamed query and mapped links.
  * @param props - Query component and labels.
@@ -1173,14 +1139,14 @@ test("UI contracts reject text and component styling escapes across composition 
   const files = new Map();
 
   for (const [name, expression] of Object.entries(cases)) {
-    const file = `packages/ui/stories/pages/${name.replaceAll(" ", "-")}.tsx`;
+    const file = `frontend/packages/ui/stories/pages/${name.replaceAll(" ", "-")}.tsx`;
 
     files.set(name, file);
     fixture.write(
       file,
-      `import { Button as Action } from "@workspace/ui/components/atoms/button";
-import { Typography } from "@workspace/ui/components/atoms/typography";
-import { Field } from "@workspace/ui/components/molecules/field";
+      `import { Button as Action } from "@repo/ui/components/atoms/button";
+import { Typography } from "@repo/ui/components/atoms/typography";
+import { Field } from "@repo/ui/components/molecules/field";
 
 const Copy = Typography.p;
 
@@ -1221,17 +1187,17 @@ export function Example({ children }: { children: string }) { return ${expressio
 
 test("CSS contracts reject text overrides, primitive selectors, apply escapes and inline suppressions", async (t) => {
   const cases = {
-    apply: ["apps/console/example.css", ".layout { @apply text-xl; }"],
-    color: ["apps/console/example.css", ".layout { color: red; }"],
+    apply: ["frontend/example.css", ".layout { @apply text-xl; }"],
+    color: ["frontend/example.css", ".layout { color: red; }"],
     selector: [
-      "apps/console/example.css",
+      "frontend/example.css",
       '[data-slot="button"] { padding: 2rem; }',
     ],
     suppression: [
-      "apps/console/example.tsx",
+      "frontend/example.tsx",
       "// oxlint-disable ui-policy/ui-contracts\nexport const value = <div>Hello</div>;",
     ],
-    typography: ["apps/console/example.css", ".copy { font-size: 18px; }"],
+    typography: ["frontend/example.css", ".copy { font-size: 18px; }"],
   };
 
   for (const [name, [file, source]] of Object.entries(cases))
@@ -1250,12 +1216,9 @@ test("CSS contracts reject text overrides, primitive selectors, apply escapes an
 test("CSS layout and the existing scoped MDX wrapper remain approved", (t) => {
   const fixture = consumer(t);
 
+  fixture.write("frontend/layout.css", ".layout { display: grid; gap: 1rem; }");
   fixture.write(
-    "apps/console/layout.css",
-    ".layout { display: grid; gap: 1rem; }",
-  );
-  fixture.write(
-    "packages/ui/.storybook/overview-document.tsx",
+    "frontend/packages/ui/.storybook/overview-document.tsx",
     `/** Render the existing MDX surface.
  * @returns Scoped document typography.
  */
@@ -1271,7 +1234,7 @@ export const Overview = () => { return <div className="typeset typeset-docs" sty
 test("the existing next-intl declaration-merging suppression cannot disable UI contracts", (t) => {
   const fixture = consumer(t);
 
-  const file = "packages/i18n/src/frontend/index.ts";
+  const file = "frontend/packages/i18n/src/frontend/index.ts";
 
   fixture.write(
     file,
@@ -1296,11 +1259,11 @@ test("lower-level control imports, createElement text and nested configurations 
   const fixture = consumer(t);
 
   fixture.write(
-    "apps/console/oxlint.config.ts",
+    "frontend/oxlint.config.ts",
     'export default { rules: { "ui-policy/ui-contracts": "off" } };\n',
   );
   fixture.write(
-    "apps/console/escape.tsx",
+    "frontend/escape.tsx",
     `import { Button } from "@base-ui/react/button";
 import { createElement } from "react";
 
@@ -1324,7 +1287,7 @@ test("Storybook args cannot restyle the canonical component through generated re
   const fixture = consumer(t);
 
   fixture.write(
-    "apps/console/example.stories.tsx",
+    "frontend/example.stories.tsx",
     `export const Resized = { args: { className: "text-xl rounded-full" } };
 
 export const InlineStyle = { args: { style: { fontSize: 28 } } };
@@ -1336,7 +1299,7 @@ export const InlineStyle = { args: { style: { fontSize: 28 } } };
   assert.notEqual(rejected.status, 0);
   assert.match(rejected.stdout + rejected.stderr, /ui-contracts/);
   fixture.write(
-    "apps/console/example.stories.tsx",
+    "frontend/example.stories.tsx",
     'export const FullWidth = { args: { className: "w-full" } };\n',
   );
 
@@ -1349,13 +1312,13 @@ test("app shell primitives accept canonical parts and keep structural containers
   const fixture = consumer(t);
 
   fixture.write(
-    "apps/console/example.tsx",
-    `import { DropdownMenuItem } from "@workspace/ui/components/molecules/dropdown-menu";
-import { EmptyTitle } from "@workspace/ui/components/molecules/empty";
-import { TableCell } from "@workspace/ui/components/molecules/table";
-import { TooltipContent } from "@workspace/ui/components/molecules/tooltip";
-import { DialogTitle } from "@workspace/ui/components/organisms/dialog";
-import { SidebarMenuButton } from "@workspace/ui/components/organisms/sidebar";
+    "frontend/example.tsx",
+    `import { DropdownMenuItem } from "@repo/ui/components/molecules/dropdown-menu";
+import { EmptyTitle } from "@repo/ui/components/molecules/empty";
+import { TableCell } from "@repo/ui/components/molecules/table";
+import { TooltipContent } from "@repo/ui/components/molecules/tooltip";
+import { DialogTitle } from "@repo/ui/components/organisms/dialog";
+import { SidebarMenuButton } from "@repo/ui/components/organisms/sidebar";
 
 /** Compose the registered text-owning parts.
  * @returns Canonical interface parts with their own copy.
@@ -1375,11 +1338,11 @@ export const Example = () => { return <><DropdownMenuItem>Theme</DropdownMenuIte
     "<TableRow>Client</TableRow>",
   ]) {
     fixture.write(
-      "apps/console/example.tsx",
-      `import { EmptyContent } from "@workspace/ui/components/molecules/empty";
-import { TableRow } from "@workspace/ui/components/molecules/table";
-import { DialogContent } from "@workspace/ui/components/organisms/dialog";
-import { SidebarHeader, SidebarMenuButton } from "@workspace/ui/components/organisms/sidebar";
+      "frontend/example.tsx",
+      `import { EmptyContent } from "@repo/ui/components/molecules/empty";
+import { TableRow } from "@repo/ui/components/molecules/table";
+import { DialogContent } from "@repo/ui/components/organisms/dialog";
+import { SidebarHeader, SidebarMenuButton } from "@repo/ui/components/organisms/sidebar";
 
 /** Verify structural parts do not inherit primitive text ownership.
  * @returns The rejected composition.
@@ -1402,7 +1365,7 @@ test("single-component primitive files retain exact styling and text-ownership c
   const fixture = consumer(t);
 
   const primitive =
-    "packages/ui/src/components/molecules/dropdown-menu/dropdown-menu-item.tsx";
+    "frontend/packages/ui/src/components/molecules/dropdown-menu/dropdown-menu-item.tsx";
 
   const source = `/** Render the canonical menu item.
  * @returns The owned menu control.
@@ -1412,8 +1375,8 @@ export const DropdownMenuItem = () => <button className="rounded-[4px]">Save</bu
 
   fixture.write(primitive, source);
   fixture.write(
-    "apps/console/example.tsx",
-    `import { DropdownMenuItem } from "@workspace/ui/components/molecules/dropdown-menu/dropdown-menu-item";
+    "frontend/example.tsx",
+    `import { DropdownMenuItem } from "@repo/ui/components/molecules/dropdown-menu/dropdown-menu-item";
 
 /** Compose a directly imported canonical text-owning part.
  * @returns The menu action.
@@ -1427,7 +1390,7 @@ export const Example = () => <DropdownMenuItem>Save</DropdownMenuItem>;
   assert.equal(allowed.status, 0, allowed.stdout + allowed.stderr);
   rmSync(join(fixture.directory, primitive));
   fixture.write(
-    "packages/ui/src/components/molecules/dropdown-menu/custom-item.tsx",
+    "frontend/packages/ui/src/components/molecules/dropdown-menu/custom-item.tsx",
     source,
   );
 

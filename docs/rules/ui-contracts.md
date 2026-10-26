@@ -5,8 +5,7 @@ Presets: `preambient` · Autofix: none
 > These contracts encode the Preambient design system (shared `Typography`, registered shadcn primitives). They are published as a worked example of enforcing a UI contract with Oxlint JS plugins; fork the registry in `src/ui-policy.js` to adapt them.
 
 The Preambient preset combines pinned `@shadcn/lint` rules with
-`ui-policy/ui-contracts` for `apps/console/**`, `apps/platform/**`,
-`packages/ui/**`, and `packages/i18n/src/frontend/**`. Use the shared
+`ui-policy/ui-contracts` for `frontend/**` and `internal/apps/**`. Use the shared
 `Typography.h1` through `.h6`, `.p`, and semantic inline/list members for authored
 text. This includes stories, pages, templates, and compositions. Plain text is
 allowed inside registered text-owning primitive exports: buttons, badges, labels,
@@ -36,7 +35,7 @@ The shared CLI also parses frontend CSS and rejects text declarations, canonical
 component selector overrides, and `@apply` outside the named theme/Typography
 stylesheets. Inline frontend lint suppressions are rejected by this check. The sole existing
 non-UI exception is the exact next-intl declaration-merging directive in
-`packages/i18n/src/frontend/index.ts`; it cannot suppress UI rules.
+`frontend/packages/i18n/src/frontend/index.ts`; it cannot suppress UI rules.
 The vendor Typeset stylesheet and the existing scoped Storybook overview MDX
 wrapper remain explicit exceptions. MDX keeps its current Typeset rendering.
 Add any necessary exception centrally, with a reason and policy fixtures, and
