@@ -912,7 +912,11 @@ const sharedSlots = new Map();
  * @returns Whether every property is a statically named `--*` custom property.
  */
 function customProperties(value) {
-  const object = value?.type === "JSXExpressionContainer" && value.expression;
+  let object = value?.type === "JSXExpressionContainer" && value.expression;
+
+  // React's CSSProperties omits custom properties, so callers usually cast the object.
+  while (["TSAsExpression", "TSSatisfiesExpression"].includes(object?.type))
+    object = object.expression;
 
   return (
     object?.type === "ObjectExpression" &&

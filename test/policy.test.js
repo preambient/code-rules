@@ -1161,7 +1161,7 @@ test("UI contracts reject text and component styling escapes across composition 
       '<div>{["one", "two"].map((value) => (value))}</div>',
     "mapped strings": '<div>{["one", "two"].map((value) => value)}</div>',
     "mixed custom property style":
-      '<div style={{ "--size": "1px", width: 1 }}><Copy>Hello</Copy></div>',
+      '<div style={{ "--size": "1px", width: 1 } as object}><Copy>Hello</Copy></div>',
     "native button": '<button type="button">Save</button>',
     "native input": '<input aria-label="Name" />',
     "nested untyped children":
@@ -1558,7 +1558,7 @@ export const Panel = ({ actions, children, title }: PanelProps) => {
   );
   fixture.write(
     "apps/console/example.tsx",
-    `import type { ReactNode } from "react";
+    `import type { CSSProperties, ReactNode } from "react";
 
 /** Forward a declared slot from inline collection callbacks.
  * @param props - Repeated icon slot and row keys.
@@ -1575,6 +1575,7 @@ export const Example = ({ icon, rows }: { icon: null | ReactNode; rows: string[]
       {rows.flatMap((row) => (row ? [<div key={row}>{icon}</div>] : []))}
       {Array.from(rows, (row) => (<div key={row}>{icon}</div>))}
       <div className="h-(--row-height)" style={{ "--row-height": String(rows.length) + "rem" }} />
+      <div className="w-(--row-width)" style={{ "--row-width": "1rem" } as CSSProperties} />
     </div>
   );
 };

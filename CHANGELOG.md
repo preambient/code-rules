@@ -28,7 +28,8 @@
 - Allow `shrink-0`, `grow-0`, and `min-h-0` as placement classes on shared
   components, alongside the existing `shrink`, `grow`, and `min-w-*`.
 - UI contracts accept a `style` object that only sets CSS custom properties, so
-  runtime geometry can reach classes such as `h-(--page-height)`. Any other
+  runtime geometry can reach classes such as `h-(--page-height)`, including through
+  an `as CSSProperties` cast. Any other
   inline style is still rejected.
 - UI contracts no longer read comparison operands such as `align === "start"` as
   class names.
