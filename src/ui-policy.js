@@ -302,17 +302,15 @@ const primitiveParts = {
 
 const primitiveFiles = [
   ...Object.keys(primitiveModules).map(
-    (name) => `frontend/packages/ui/src/components/${name}.tsx`,
+    (name) => `packages/ui/src/components/${name}.tsx`,
   ),
-  "frontend/packages/ui/src/providers/tooltip-provider.tsx",
+  "packages/ui/src/providers/tooltip-provider.tsx",
   ...Object.entries(primitiveParts).flatMap(([module, parts]) =>
-    parts.map(
-      (part) => `frontend/packages/ui/src/components/${module}/${part}.tsx`,
-    ),
+    parts.map((part) => `packages/ui/src/components/${module}/${part}.tsx`),
   ),
 ];
 
-const documentFiles = ["frontend/packages/ui/.storybook/overview-document.tsx"];
+const documentFiles = ["packages/ui/.storybook/overview-document.tsx"];
 
 const textTags = new Set([
   "a",
@@ -468,7 +466,7 @@ function create(context) {
    * @returns Whether it belongs to the canonical UI package.
    */
   function shared(info) {
-    return info?.module.startsWith("@repo/ui/components/");
+    return info?.module.startsWith("@workspace/ui/components/");
   }
 
   /** Determine if this JSX element owns the text of its descendants.
@@ -480,7 +478,7 @@ function create(context) {
 
     if (!shared(info)) return false;
 
-    const module = info.module.slice("@repo/ui/components/".length);
+    const module = info.module.slice("@workspace/ui/components/".length);
 
     if (module === "atoms/typography")
       return /^Typography\.(?:a|blockquote|code|dd|dl|dt|em|h[1-6]|li|ol|p|pre|small|span|srOnly|strong|ul)$/u.test(
@@ -651,7 +649,7 @@ function create(context) {
 
       const target = identity(tag);
 
-      const module = target?.module.slice("@repo/ui/components/".length);
+      const module = target?.module.slice("@workspace/ui/components/".length);
 
       const owner =
         shared(target) &&
