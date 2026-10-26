@@ -1134,10 +1134,14 @@ export const Example = ({ labels, Query }: { labels: string[]; Query: any }) => 
 
 test("UI contracts reject text and component styling escapes across composition levels", async (t) => {
   const cases = {
+    "array-from strings": '<div>{Array.from(["one"], (value) => value)}</div>',
     "bare text": "<div>Hello</div>",
+    "block mapped strings":
+      '<div>{["one", "two"].map((value) => { if (value) return value; return null; })}</div>',
     "children attribute": '<div children="Hello" />',
+    "comparison-gated restyle":
+      '<Action className={(String(Date.now()) === "1" && "rounded-full") || undefined}>Save</Action>',
     "conditional text": '<div>{Date.now() ? "yes" : "no"}</div>',
-
     "conditional typography":
       '<div className={Date.now() ? "text-sm" : "text-lg"}><Copy>Hello</Copy></div>',
     "constant typography":
@@ -1145,6 +1149,7 @@ test("UI contracts reject text and component styling escapes across composition 
     "custom button role":
       '<div role="button" tabIndex={0}><Copy>Save</Copy></div>',
     "dynamic text": "<div>{String(Date.now())}</div>",
+    "flat mapped strings": '<div>{["one"].flatMap((value) => [value])}</div>',
     "forged Typography": "<Local.p>Hello</Local.p>",
     "fragment text": "<>Hello</>",
     "inline style": "<Copy style={{ fontSize: 30 }}>Hello</Copy>",
@@ -1157,7 +1162,8 @@ test("UI contracts reject text and component styling escapes across composition 
     "mapped strings": '<div>{["one", "two"].map((value) => value)}</div>',
     "native button": '<button type="button">Save</button>',
     "native input": '<input aria-label="Name" />',
-
+    "nested untyped children":
+      '<div>{["one"].map((value) => (<div key={value}>{children}</div>))}</div>',
     "raw dynamic span": "<span>{String(Date.now())}</span>",
     "raw paragraph": "<p>Hello</p>",
     "rendered strings": '<Query>{() => "Hello"}</Query>',
@@ -1440,4 +1446,162 @@ export const Example = () => <DropdownMenuItem>Save</DropdownMenuItem>;
     rejected.stdout + rejected.stderr,
     /ui-contracts|no-arbitrary-values/,
   );
+});
+
+test("chat, disclosure, and loading primitives own their text and keep structural parts protected", (t) => {
+  const fixture = consumer(t);
+
+  fixture.write(
+    "packages/ui/src/components/molecules/popover/popover-content.tsx",
+    `/** Render the canonical popover popup.
+ * @param props - Popup content.
+ * @returns The styled popup.
+ */
+export const PopoverContent = (props: { children?: unknown }) => <div className="max-h-(--available-height) rounded-[10px] text-sm" {...props} />;
+`,
+  );
+  fixture.write(
+    "apps/console/example.tsx",
+    `import { AttachmentTitle } from "@workspace/ui/components/molecules/attachment";
+import { BubbleContent } from "@workspace/ui/components/molecules/bubble";
+import { CodeBlockTitle } from "@workspace/ui/components/molecules/code-block";
+import { CollapsibleTrigger } from "@workspace/ui/components/molecules/collapsible";
+import { HoverCardTrigger } from "@workspace/ui/components/molecules/hover-card";
+import { LoadingButton } from "@workspace/ui/components/molecules/loading-button";
+import { MessageHeader } from "@workspace/ui/components/molecules/message";
+import { PopoverTrigger } from "@workspace/ui/components/molecules/popover";
+import { TraceTitle } from "@workspace/ui/components/molecules/trace/trace-title";
+import { MessageScrollerButton } from "@workspace/ui/components/organisms/message-scroller";
+
+/** Compose the registered text-owning parts.
+ * @returns Canonical chat and disclosure parts with their own copy.
+ */
+export const Example = () => { return <><AttachmentTitle>report.pdf</AttachmentTitle><BubbleContent>Hello</BubbleContent><CodeBlockTitle>index.ts</CodeBlockTitle><CollapsibleTrigger>Details</CollapsibleTrigger><HoverCardTrigger>Ada</HoverCardTrigger><LoadingButton className="mt-2">Save</LoadingButton><MessageHeader>Ada</MessageHeader><PopoverTrigger>Open</PopoverTrigger><TraceTitle>Searching</TraceTitle><MessageScrollerButton>Latest</MessageScrollerButton></>; };
+`,
+  );
+
+  const accepted = fixture.run("lint");
+
+  assert.equal(accepted.status, 0, accepted.stdout + accepted.stderr);
+  for (const expression of [
+    '<LoadingButton className="rounded-full">Save</LoadingButton>',
+    "<PopoverContent>Details</PopoverContent>",
+    "<MessageContent>Hello</MessageContent>",
+    "<BubbleGroup>Hello</BubbleGroup>",
+    "<TraceCollapsibleContent>Steps</TraceCollapsibleContent>",
+  ]) {
+    fixture.write(
+      "apps/console/example.tsx",
+      `import { BubbleGroup } from "@workspace/ui/components/molecules/bubble";
+import { LoadingButton } from "@workspace/ui/components/molecules/loading-button";
+import { MessageContent } from "@workspace/ui/components/molecules/message";
+import { PopoverContent } from "@workspace/ui/components/molecules/popover";
+import { TraceCollapsibleContent } from "@workspace/ui/components/molecules/trace";
+
+/** Verify structural parts do not inherit primitive text ownership.
+ * @returns The rejected composition.
+ */
+export function Example() { return ${expression}; }
+`,
+    );
+
+    const rejected = fixture.run("lint");
+
+    assert.notEqual(rejected.status, 0, expression);
+    assert.match(rejected.stdout + rejected.stderr, /ui-contracts|no-restyle/);
+  }
+});
+
+test("UI contracts follow shared props types, inline callbacks, and comparison-gated classes", (t) => {
+  const fixture = consumer(t);
+
+  fixture.write(
+    "packages/ui/src/components/molecules/panel/shared.tsx",
+    `import type { ReactNode } from "react";
+
+export type PanelProps = {
+  actions?: null | ReactNode;
+  children: ReactNode;
+  options: { label: string; tone?: ReactNode };
+  title: string;
+};
+`,
+  );
+  fixture.write(
+    "packages/ui/src/components/molecules/panel/panel.tsx",
+    `import { Button } from "@workspace/ui/components/atoms/button";
+import { Typography } from "@workspace/ui/components/atoms/typography";
+import { PanelProps } from "@workspace/ui/components/molecules/panel/shared";
+
+/** Arrange a titled panel whose slots are declared in its shared file.
+ * @param props - Panel slots and title.
+ * @returns The arranged panel.
+ */
+export const Panel = ({ actions, children, title }: PanelProps) => {
+  return (
+    <section>
+      <Typography.h2>{title}</Typography.h2>
+      <div>{children}</div>
+      <div>{actions}</div>
+      <Button className={title === "start" ? "justify-start" : undefined}>
+        <Typography.span>Open</Typography.span>
+      </Button>
+      <Button className={(title === "start" && "justify-start") || undefined}>
+        <Typography.span>Close</Typography.span>
+      </Button>
+    </section>
+  );
+};
+`,
+  );
+  fixture.write(
+    "apps/console/example.tsx",
+    `import type { ReactNode } from "react";
+
+/** Forward a declared slot from inline collection callbacks.
+ * @param props - Repeated icon slot and row keys.
+ * @returns Mapped rows.
+ */
+export const Example = ({ icon, rows }: { icon: null | ReactNode; rows: string[] }) => {
+  return (
+    <div>
+      {rows.map((row) => (<div key={row}>{icon}</div>))}
+      {rows.map((row) => {
+        if (!row) return null;
+        return <div key={row}>{icon}</div>;
+      })}
+      {rows.flatMap((row) => (row ? [<div key={row}>{icon}</div>] : []))}
+      {Array.from(rows, (row) => (<div key={row}>{icon}</div>))}
+    </div>
+  );
+};
+`,
+  );
+
+  const accepted = fixture.run("lint");
+
+  assert.equal(accepted.status, 0, accepted.stdout + accepted.stderr);
+  for (const [slot, pattern] of [
+    ["title", /Render authored text/u],
+    ["options.label", /Render authored text/u],
+  ]) {
+    fixture.write(
+      "packages/ui/src/components/molecules/panel/panel-title.tsx",
+      `import { PanelProps } from "@workspace/ui/components/molecules/panel/shared";
+
+/** Render an undeclared string slot without a text owner.
+ * @param props - Panel props.
+ * @returns The rejected title.
+ */
+export const PanelTitle = ({ options, title }: PanelProps) => {
+  return <div>{${slot}}</div>;
+};
+`,
+    );
+
+    const rejected = fixture.run("lint");
+
+    assert.notEqual(rejected.status, 0, slot);
+    assert.match(rejected.stdout + rejected.stderr, pattern);
+  }
 });

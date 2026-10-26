@@ -27,7 +27,12 @@ layout containers are rejected. Import aliases and simple component aliases are
 resolved; conditional/constant class expressions are inspected.
 
 A function may forward slots explicitly typed `ReactNode` (including optional
-slots, props type aliases, `Readonly`, and `PropsWithChildren`). String-valued
+slots in either union order, props type aliases, `Readonly`, `PropsWithChildren`,
+and props types exported from a `@workspace/ui/components/*` module such as a
+compound part's `shared.tsx`). Inline `map`, `flatMap`, and `Array.from`
+callbacks may forward those slots or return elements, with either expression or
+block bodies. Comparisons that only gate a class, such as
+`align === "start" && "justify-start"`, are not read as classes. String-valued
 props and arbitrary expressions need a text owner. Avoid typing copy as
 `ReactNode` to circumvent the contract. This is an authored-source rule, not a
 runtime proof of values received from external data.
