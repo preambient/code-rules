@@ -1,3 +1,6 @@
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+
 // This registry is intentionally files and exports, never a components-directory exemption.
 const primitiveModules = {
   "atoms/avatar": ["AvatarFallback", "AvatarGroupCount"],
@@ -16,7 +19,20 @@ const primitiveModules = {
   "atoms/textarea": [],
   "atoms/toggle": ["Toggle"],
   "atoms/typography": ["Typography"],
+  "molecules/attachment": [
+    "AttachmentAction",
+    "AttachmentDescription",
+    "AttachmentTitle",
+    "AttachmentTrigger",
+  ],
+  "molecules/bubble": ["BubbleContent"],
   "molecules/button-group": ["ButtonGroupText"],
+  "molecules/code-block": [
+    "CodeBlockContent",
+    "CodeBlockCopyButton",
+    "CodeBlockTitle",
+  ],
+  "molecules/collapsible": ["CollapsibleTrigger"],
   "molecules/dropdown-menu": [
     "DropdownMenuCheckboxItem",
     "DropdownMenuItem",
@@ -35,16 +51,26 @@ const primitiveModules = {
     "FieldSeparator",
     "FieldTitle",
   ],
+  "molecules/hover-card": ["HoverCardTrigger"],
   "molecules/input-group": ["InputGroupButton", "InputGroupText"],
+  "molecules/loading-button": ["LoadingButton"],
   "molecules/marker": ["MarkerContent"],
+  "molecules/message": ["MessageFooter", "MessageHeader"],
   "molecules/pagination": [
     "PaginationLink",
     "PaginationNext",
     "PaginationPrevious",
   ],
+  "molecules/popover": ["PopoverTrigger"],
   "molecules/radio-group": [],
   "molecules/table": ["TableCaption", "TableCell", "TableHead"],
   "molecules/tooltip": ["TooltipContent", "TooltipTrigger"],
+  "molecules/trace": [
+    "TraceCollapsibleTrigger",
+    "TraceDescription",
+    "TraceLine",
+    "TraceTitle",
+  ],
   "organisms/alert-dialog": [
     "AlertDialogAction",
     "AlertDialogCancel",
@@ -58,6 +84,7 @@ const primitiveModules = {
     "DialogTitle",
     "DialogTrigger",
   ],
+  "organisms/message-scroller": ["MessageScrollerButton"],
   "organisms/questionnaire": [
     "QuestionnaireChoice",
     "QuestionnaireChoiceDescription",
@@ -124,11 +151,46 @@ const primitiveParts = {
     "select-separator",
   ],
   "atoms/toggle": ["shared", "toggle-group", "toggle"],
+  "molecules/attachment": [
+    "attachment",
+    "attachment-action",
+    "attachment-actions",
+    "attachment-content",
+    "attachment-description",
+    "attachment-group",
+    "attachment-media",
+    "attachment-title",
+    "attachment-trigger",
+    "shared",
+  ],
+  "molecules/bubble": [
+    "bubble",
+    "bubble-content",
+    "bubble-group",
+    "bubble-reactions",
+    "shared",
+  ],
   "molecules/button-group": [
     "shared",
     "button-group-separator",
     "button-group-text",
     "button-group",
+  ],
+  "molecules/code-block": [
+    "code-block",
+    "code-block-actions",
+    "code-block-content",
+    "code-block-copy-button",
+    "code-block-footer",
+    "code-block-header",
+    "code-block-line",
+    "code-block-title",
+    "shared",
+  ],
+  "molecules/collapsible": [
+    "collapsible",
+    "collapsible-content",
+    "collapsible-trigger",
   ],
   "molecules/dropdown-menu": [
     "dropdown-menu-label",
@@ -169,6 +231,11 @@ const primitiveParts = {
     "field-description",
     "field-separator",
   ],
+  "molecules/hover-card": [
+    "hover-card",
+    "hover-card-content",
+    "hover-card-trigger",
+  ],
   "molecules/input-group": [
     "input-group-button",
     "shared",
@@ -179,6 +246,14 @@ const primitiveParts = {
     "input-group-addon",
   ],
   "molecules/marker": ["shared", "marker-content", "marker-icon", "marker"],
+  "molecules/message": [
+    "message",
+    "message-avatar",
+    "message-content",
+    "message-footer",
+    "message-group",
+    "message-header",
+  ],
   "molecules/pagination": [
     "pagination",
     "shared",
@@ -189,6 +264,7 @@ const primitiveParts = {
     "pagination-link",
     "pagination-next",
   ],
+  "molecules/popover": ["popover", "popover-content", "popover-trigger"],
   "molecules/radio-group": ["radio-group", "radio-group-item"],
   "molecules/table": [
     "shared",
@@ -202,6 +278,16 @@ const primitiveParts = {
     "table-body",
   ],
   "molecules/tooltip": ["tooltip-trigger", "tooltip-content", "tooltip"],
+  "molecules/trace": [
+    "trace",
+    "trace-collapsible",
+    "trace-collapsible-content",
+    "trace-collapsible-trigger",
+    "trace-description",
+    "trace-icon",
+    "trace-line",
+    "trace-title",
+  ],
   "organisms/alert-dialog": [
     "alert-dialog-overlay",
     "alert-dialog-action",
@@ -227,6 +313,14 @@ const primitiveParts = {
     "dialog-footer",
     "dialog-title",
     "dialog",
+  ],
+  "organisms/message-scroller": [
+    "message-scroller",
+    "message-scroller-button",
+    "message-scroller-content",
+    "message-scroller-item",
+    "message-scroller-provider",
+    "message-scroller-viewport",
   ],
   "organisms/questionnaire": [
     "questionnaire-choice",
@@ -302,17 +396,15 @@ const primitiveParts = {
 
 const primitiveFiles = [
   ...Object.keys(primitiveModules).map(
-    (name) => `frontend/packages/ui/src/components/${name}.tsx`,
+    (name) => `packages/ui/src/components/${name}.tsx`,
   ),
-  "frontend/packages/ui/src/providers/tooltip-provider.tsx",
+  "packages/ui/src/providers/tooltip-provider.tsx",
   ...Object.entries(primitiveParts).flatMap(([module, parts]) =>
-    parts.map(
-      (part) => `frontend/packages/ui/src/components/${module}/${part}.tsx`,
-    ),
+    parts.map((part) => `packages/ui/src/components/${module}/${part}.tsx`),
   ),
 ];
 
-const documentFiles = ["frontend/packages/ui/.storybook/overview-document.tsx"];
+const documentFiles = ["packages/ui/.storybook/overview-document.tsx"];
 
 const textTags = new Set([
   "a",
@@ -349,11 +441,15 @@ const textTags = new Set([
 
 const controls = new Set(["button", "input", "select", "textarea"]);
 
+// Optional slots may list null or undefined on either side once unions are sorted.
+const reactNodeType =
+  /^(?:(?:null|undefined)\s*\|\s*)*(?:React\.)?ReactNode(?:\s*\|\s*(?:null|undefined))*$/u;
+
 const typographyClass =
   /^(?:text-|font-|leading-|tracking-|decoration-|underline|overline|line-through|no-underline|italic|not-italic|uppercase|lowercase|capitalize|normal-case|antialiased|subpixel-antialiased|prose(?:-|$))/u;
 
 const placementClass =
-  /^(?:(?:-?m[trblxyse]?|w|min-w|max-w|inset(?:-[xy])?|top|bottom|left|right|start|end|z|order|col|row|basis|self|justify-self|place-self|gap|gap-x|gap-y|grid-cols|grid-rows|col-span|row-span)-|(?:block|inline|inline-block|flex|inline-flex|grid|inline-grid|hidden|contents|relative|absolute|fixed|sticky|static|grow|shrink|flex-1|flex-auto|flex-none|flex-col|flex-row|flex-wrap|items-start|items-center|items-end|justify-start|justify-center|justify-end|justify-between)$)/u;
+  /^(?:(?:-?m[trblxyse]?|w|min-w|max-w|inset(?:-[xy])?|top|bottom|left|right|start|end|z|order|col|row|basis|self|justify-self|place-self|gap|gap-x|gap-y|grid-cols|grid-rows|col-span|row-span)-|(?:block|inline|inline-block|flex|inline-flex|grid|inline-grid|hidden|contents|relative|absolute|fixed|sticky|static|grow|grow-0|shrink|shrink-0|min-h-0|flex-1|flex-auto|flex-none|flex-col|flex-row|flex-wrap|items-start|items-center|items-end|justify-start|justify-center|justify-end|justify-between)$)/u;
 
 /** Build the UI AST visitors used by the Preambient preset.
  * @param context - Oxlint-compatible ESLint context.
@@ -431,6 +527,8 @@ function create(context) {
     seen.add(node);
     if (node.type === "Literal")
       return typeof node.value === "string" ? node.value.split(/\s+/u) : [];
+    // Comparisons only gate classes; their operands never reach the class list.
+    if (node.type === "BinaryExpression") return [];
     if (node.type === "Identifier") {
       for (let scope = source.getScope?.(node); scope; scope = scope.upper) {
         const variable = scope.set?.get(node.name);
@@ -468,7 +566,7 @@ function create(context) {
    * @returns Whether it belongs to the canonical UI package.
    */
   function shared(info) {
-    return info?.module.startsWith("@repo/ui/components/");
+    return info?.module.startsWith("@workspace/ui/components/");
   }
 
   /** Determine if this JSX element owns the text of its descendants.
@@ -480,7 +578,7 @@ function create(context) {
 
     if (!shared(info)) return false;
 
-    const module = info.module.slice("@repo/ui/components/".length);
+    const module = info.module.slice("@workspace/ui/components/".length);
 
     if (module === "atoms/typography")
       return /^Typography\.(?:a|blockquote|code|dd|dl|dt|em|h[1-6]|li|ol|p|pre|small|span|srOnly|strong|ul)$/u.test(
@@ -552,14 +650,20 @@ function create(context) {
         ];
       if (visited.has(name)) return [];
       visited.add(name);
-      return slotNames(types.get(name), visited);
+      if (types.has(name)) return slotNames(types.get(name), visited);
+
+      const info = imports.get(name);
+
+      return shared(info)
+        ? sharedSlotNames(context.cwd ?? process.cwd(), info.module, info.name)
+        : [];
     }
     if (annotation.type === "TSTypeLiteral")
       return annotation.members
         .filter(
           (member) =>
             member.type === "TSPropertySignature" &&
-            /^(?:React\.)?ReactNode(?:\s*\|\s*(?:null|undefined))?$/u.test(
+            reactNodeType.test(
               source.getText(member.typeAnnotation?.typeAnnotation ?? member),
             ),
         )
@@ -610,29 +714,45 @@ function create(context) {
       return safe(node.expression);
     if (
       node.type === "CallExpression" &&
-      node.callee.type === "MemberExpression" &&
-      node.callee.property.name === "map"
+      node.callee.type === "MemberExpression"
     ) {
-      const callback = node.arguments[0];
+      const method = node.callee.property.name;
 
-      if (
-        callback?.type === "ArrowFunctionExpression" &&
-        callback.body.type !== "BlockStatement"
-      )
-        return safe(callback.body);
+      const callback =
+        method === "from" && node.callee.object.name === "Array"
+          ? node.arguments[1]
+          : ["flatMap", "map"].includes(method)
+            ? node.arguments[0]
+            : undefined;
+
+      if (callback?.type === "ArrowFunctionExpression") return safe(callback);
     }
 
-    if (
-      node.type === "ArrowFunctionExpression" &&
-      node.body.type !== "BlockStatement"
-    )
-      return safe(node.body);
+    if (node.type === "ArrowFunctionExpression")
+      return node.body.type === "BlockStatement"
+        ? returns(node.body).every(safe)
+        : safe(node.body);
 
     const text = source.getText(node);
 
+    // Inline callbacks may forward slots declared by an enclosing component.
     for (let parent = node.parent; parent; parent = parent.parent)
-      if (slots.has(parent)) return slots.get(parent).has(text);
+      if (slots.get(parent)?.has(text)) return true;
     return false;
+  }
+
+  /** Collect values returned by a function body without entering nested functions.
+   * @param node - Statement or expression inside the function body.
+   * @returns Returned expressions, with undefined for bare returns.
+   */
+  function returns(node) {
+    if (!node?.type || /Function/u.test(node.type)) return [];
+    if (node.type === "ReturnStatement") return [node.argument];
+    return Object.entries(node)
+      .filter(([key]) => !["loc", "parent", "range"].includes(key))
+      .flatMap(([, value]) =>
+        Array.isArray(value) ? value.flatMap(returns) : returns(value),
+      );
   }
 
   return {
@@ -651,7 +771,7 @@ function create(context) {
 
       const target = identity(tag);
 
-      const module = target?.module.slice("@repo/ui/components/".length);
+      const module = target?.module.slice("@workspace/ui/components/".length);
 
       const owner =
         shared(target) &&
@@ -699,7 +819,8 @@ function create(context) {
       const info = identity(node.parent.name);
 
       if (name === "style") {
-        context.report({ messageId: "style", node });
+        if (!customProperties(node.value))
+          context.report({ messageId: "style", node });
         return;
       }
 
@@ -782,6 +903,86 @@ function create(context) {
         aliases.set(node.id.name, node.init);
     },
   };
+}
+
+const sharedSlots = new Map();
+
+/** Decide whether a style attribute only passes dynamic values to classes through CSS custom properties.
+ * @param value - JSX attribute value.
+ * @returns Whether every property is a statically named `--*` custom property.
+ */
+function customProperties(value) {
+  let object = value?.type === "JSXExpressionContainer" && value.expression;
+
+  // React's CSSProperties omits custom properties, so callers usually cast the object.
+  while (["TSAsExpression", "TSSatisfiesExpression"].includes(object?.type))
+    object = object.expression;
+
+  return (
+    object?.type === "ObjectExpression" &&
+    object.properties.length > 0 &&
+    object.properties.every(
+      (property) =>
+        property.type === "Property" &&
+        !property.computed &&
+        typeof property.key.value === "string" &&
+        property.key.value.startsWith("--"),
+    )
+  );
+}
+
+/** Read ReactNode members of a props type exported by a shared UI module, such as a compound part's shared file.
+ * @param root - Consumer project directory.
+ * @param module - Shared UI import specifier.
+ * @param name - Exported type alias name.
+ * @returns Names of renderable slots declared directly in that alias's object types.
+ */
+function sharedSlotNames(root, module, name) {
+  const file = join(
+    root,
+    "packages/ui/src",
+    `${module.slice("@workspace/ui/".length)}.tsx`,
+  );
+
+  const key = `${file}#${name}`;
+
+  if (sharedSlots.has(key)) return sharedSlots.get(key);
+
+  const names = [];
+
+  const text = existsSync(file) ? readFileSync(file, "utf8") : "";
+
+  const start = text.search(
+    new RegExp(`(?:^|\\n)export type ${name}\\b[^=]*=`, "u"),
+  );
+
+  if (start !== -1) {
+    let depth = 0;
+
+    let member = "";
+
+    for (const character of text.slice(text.indexOf("=", start) + 1)) {
+      if (depth === 0 && character === ";") break;
+      if (character === "{") depth += 1;
+      if (character === "}") depth -= 1;
+      // Members end at a top-level semicolon or at the brace closing their object type.
+      if (
+        (depth === 1 && character === ";") ||
+        (depth === 0 && character === "}")
+      ) {
+        const match =
+          /^\s*(?:readonly\s+)?["']?([\w$]+)["']?\??:\s*(.+?)\s*$/su.exec(
+            member,
+          );
+
+        if (match && reactNodeType.test(match[2])) names.push(match[1]);
+        member = "";
+      } else if (depth > 1 || (depth === 1 && character !== "{"))
+        member += character;
+    }
+  }
+  sharedSlots.set(key, names);
+  return names;
 }
 
 /** Strip variants without confusing arbitrary selector colons with utility prefixes.

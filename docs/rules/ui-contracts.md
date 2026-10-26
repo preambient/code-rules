@@ -5,7 +5,8 @@ Presets: `preambient` · Autofix: none
 > These contracts encode the Preambient design system (shared `Typography`, registered shadcn primitives). They are published as a worked example of enforcing a UI contract with Oxlint JS plugins; fork the registry in `src/ui-policy.js` to adapt them.
 
 The Preambient preset combines pinned `@shadcn/lint` rules with
-`ui-policy/ui-contracts` for `frontend/**` and `internal/apps/**`. Use the shared
+`ui-policy/ui-contracts` for `apps/console/**`, `apps/platform/**`,
+`packages/ui/**`, and `packages/i18n/src/frontend/**`. Use the shared
 `Typography.h1` through `.h6`, `.p`, and semantic inline/list members for authored
 text. This includes stories, pages, templates, and compositions. Plain text is
 allowed inside registered text-owning primitive exports: buttons, badges, labels,
@@ -23,10 +24,17 @@ Direct lower-level primitive imports and raw React `createElement` text/controls
 are checked too. The CLI ignores nested Oxlint configurations so they cannot
 disable the root contract. Native control recreation, inline styles, and typography utility classes on
 layout containers are rejected. Import aliases and simple component aliases are
-resolved; conditional/constant class expressions are inspected.
+resolved; conditional/constant class expressions are inspected. A `style` object that only
+sets CSS custom properties (`style={{ "--page-height": height }}`) is allowed so
+runtime values can reach classes such as `h-(--page-height)`.
 
 A function may forward slots explicitly typed `ReactNode` (including optional
-slots, props type aliases, `Readonly`, and `PropsWithChildren`). String-valued
+slots in either union order, props type aliases, `Readonly`, `PropsWithChildren`,
+and props types exported from a `@workspace/ui/components/*` module such as a
+compound part's `shared.tsx`). Inline `map`, `flatMap`, and `Array.from`
+callbacks may forward those slots or return elements, with either expression or
+block bodies. Comparisons that only gate a class, such as
+`align === "start" && "justify-start"`, are not read as classes. String-valued
 props and arbitrary expressions need a text owner. Avoid typing copy as
 `ReactNode` to circumvent the contract. This is an authored-source rule, not a
 runtime proof of values received from external data.
@@ -35,7 +43,7 @@ The shared CLI also parses frontend CSS and rejects text declarations, canonical
 component selector overrides, and `@apply` outside the named theme/Typography
 stylesheets. Inline frontend lint suppressions are rejected by this check. The sole existing
 non-UI exception is the exact next-intl declaration-merging directive in
-`frontend/packages/i18n/src/frontend/index.ts`; it cannot suppress UI rules.
+`packages/i18n/src/frontend/index.ts`; it cannot suppress UI rules.
 The vendor Typeset stylesheet and the existing scoped Storybook overview MDX
 wrapper remain explicit exceptions. MDX keeps its current Typeset rendering.
 Add any necessary exception centrally, with a reason and policy fixtures, and

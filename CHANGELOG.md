@@ -1,5 +1,41 @@
 # Changelog
 
+## 0.12.0
+
+- **Breaking (Preambient presets):** follow the monorepo's `apps/*` and `packages/*`
+  layout. Frontend, shadcn/ui, and UI contract rules now apply to `apps/console`,
+  `apps/platform`, `packages/ui`, and `packages/i18n/src/frontend`; backend rules
+  apply to `apps/agent-runtime-worker`, `apps/documents-worker`, and
+  `packages/backend`. The legacy `frontend/**`, `internal/apps/**`, and
+  `backend/**` globs no longer match anything special. Other shared packages keep
+  the base rules.
+- Move the canonical primitive, Storybook document, and stylesheet registries to
+  `packages/ui`, and the next-intl suppression exception to
+  `packages/i18n/src/frontend/index.ts`.
+- Recognize shared UI imports from `@workspace/ui` instead of `@repo/ui`.
+- Register the shadcn compound primitives in `packages/ui`: attachment, bubble,
+  code-block, collapsible, hover-card, message, popover, trace, and
+  message-scroller, plus `LoadingButton`. Their implementation files own
+  appearance, and their text-owning parts (titles, descriptions, triggers,
+  buttons, `BubbleContent`, `CodeBlockContent`, `MessageHeader`, `MessageFooter`,
+  and `TraceLine`) accept plain text. Their structural parts stay protected.
+- UI contracts read `ReactNode` slots from props types exported by
+  `@workspace/ui/components/*` modules, such as a compound part's `shared.tsx`.
+- UI contracts accept `null | ReactNode` slots, the order `sort-union-types`
+  produces. Before, only `ReactNode | null` was recognized.
+- UI contracts let inline `map`, `flatMap`, and `Array.from` callbacks forward
+  declared slots of the enclosing component, including block-bodied callbacks.
+- Allow `shrink-0`, `grow-0`, and `min-h-0` as placement classes on shared
+  components, alongside the existing `shrink`, `grow`, and `min-w-*`.
+- UI contracts accept a `style` object that only sets CSS custom properties,
+  including through an `as CSSProperties` cast, so runtime geometry can reach
+  classes such as `h-(--page-height)`. Any other inline style is still rejected.
+- UI contracts no longer read comparison operands such as `align === "start"` as
+  class names.
+- Drop the stale `backend/packages/db/.drizzle/` formatter exclusion.
+- Test that each frontend and backend directory receives its rules and that
+  legacy and shared directories do not.
+
 ## 0.11.0
 
 - **Breaking:** remove the GraphQL SDL checker, including the `./graphql` export,
