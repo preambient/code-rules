@@ -1,30 +1,17 @@
 # Changelog
 
-## 0.12.0
-
-- **Breaking (Preambient presets):** follow the monorepo's `apps/*` and `packages/*`
-  layout. Frontend, shadcn/ui, and UI contract rules now apply to `apps/console`,
-  `apps/platform`, `packages/ui`, and `packages/i18n/src/frontend`; backend rules
-  apply to `apps/agent-runtime-worker`, `apps/documents-worker`, and
-  `packages/backend`. The legacy `frontend/**`, `internal/apps/**`, and
-  `backend/**` globs no longer match anything special. Other shared packages keep
-  the base rules.
-- Move the canonical primitive, Storybook document, and stylesheet registries to
-  `packages/ui`, and the next-intl suppression exception to
-  `packages/i18n/src/frontend/index.ts`.
-- Recognize shared UI imports from `@workspace/ui` instead of `@repo/ui`.
-- Drop the stale `backend/packages/db/.drizzle/` formatter exclusion.
-- Test that each frontend and backend directory receives its rules and that
-  legacy and shared directories do not.
-
 ## 0.11.0
 
 - **Breaking:** remove the GraphQL SDL checker, including the `./graphql` export,
-  the `graphql:check` CLI command, and the pinned `graphql` dependency. Pin 0.10.x
-  to keep using it.
+  the `graphql:check` CLI command, and the pinned `graphql` dependency. Pin
+  `@preambient/code-rules@0.10.x` to keep using it.
 - Remove the Preambient preset's ordering and spacing exemption for GraphQL Code
   Generator outputs.
-- License the package under MIT and publish it as a public GitHub Packages package.
+- **Breaking:** rename the package to `@preambient-labs/code-rules` and publish it
+  publicly to npmjs.org with provenance. Installs no longer need a registry token or
+  `.npmrc`. Update `oxlint.config.mts` and `oxfmt.config.mts` wrappers to the new
+  name; the CLI rejects the old wrapper contents.
+- License the package under MIT.
 - Rewrite the README for external adopters and move detailed rule documentation
   to `docs/rules/`.
 

@@ -12,6 +12,8 @@ This repository owns Preambient's shared Oxlint and Oxfmt policies.
 - A policy or tool-version change is a versioned release. Update the changelog and
   test both permitted and rejected examples before releasing.
 - Run `bun run check` and verify the packed package before publishing.
-- Publish only through the Release workflow on `main`. Never publish to npmjs.org.
+- Publish only through the Release workflow on `main`, to npmjs.org as
+  `@preambient-labs/code-rules`. Do not publish to GitHub Packages or under
+  another scope.
 - Never commit registry tokens, package tarballs, or generated output.
 - Only the coordinator commits, pushes, and releases integrated changes.

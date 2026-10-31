@@ -2,13 +2,13 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset=".github/assets/banner-dark.svg">
-  <img alt="@preambient/code-rules: opinionated Oxlint and Oxfmt presets" src=".github/assets/banner-light.svg" width="100%">
+  <img alt="@preambient-labs/code-rules: opinionated Oxlint and Oxfmt presets" src=".github/assets/banner-light.svg" width="100%">
 </picture>
 
 <br>
 
 [![CI](https://img.shields.io/github/actions/workflow/status/preambient/code-rules/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/preambient/code-rules/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/github/package-json/v/preambient/code-rules?label=version&style=flat-square&color=E8590C)](https://github.com/preambient/code-rules/pkgs/npm/code-rules)
+[![npm](https://img.shields.io/npm/v/@preambient-labs/code-rules?style=flat-square&color=E8590C)](https://www.npmjs.com/package/@preambient-labs/code-rules)
 [![License: MIT](https://img.shields.io/github/license/preambient/code-rules?style=flat-square&color=blue)](LICENSE)
 [![Oxlint](https://img.shields.io/badge/oxlint-1.86.0-1f6feb?style=flat-square)](https://oxc.rs/docs/guide/usage/linter)
 [![Oxfmt](https://img.shields.io/badge/oxfmt-0.72.0-1f6feb?style=flat-square)](https://oxc.rs/docs/guide/usage/formatter)
@@ -16,7 +16,7 @@
 **Strict, versioned lint and format presets for TypeScript and React. Built on [Oxc](https://oxc.rs).**<br>
 Install one exact version and import one preset. Every repository then follows the same rules.
 
-[Quick start](#-quick-start) · [Presets](#-presets) · [Rules](#-rules-at-a-glance) · [CI & Docker](#-ci--docker) · [Contributing](#-contributing)
+[Quick start](#-quick-start) · [Presets](#-presets) · [Rules](#-rules-at-a-glance) · [Contributing](#-contributing)
 
 </div>
 
@@ -31,35 +31,25 @@ Install one exact version and import one preset. Every repository then follows t
 
 ## 🚀 Quick start
 
-> [!NOTE]
-> The package is published on **GitHub Packages**. Even public packages there need a GitHub token with the `read:packages` scope.
-
-**1. Point the `@preambient` scope at GitHub Packages** in `.npmrc`:
-
-```ini
-@preambient:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=${GH_TOKEN}
-```
-
-**2. Install an exact version**, along with the matching tool versions:
+**1. Install an exact version**, along with the matching tool versions:
 
 ```bash
-bun add --dev --exact @preambient/code-rules@0.12.0 oxlint@1.86.0 oxfmt@0.72.0
+bun add --dev --exact @preambient-labs/code-rules@0.11.0 oxlint@1.86.0 oxfmt@0.72.0
 ```
 
-**3. Pick a preset:**
+**2. Pick a preset:**
 
 ```ts
 // oxlint.config.ts
-export { default } from "@preambient/code-rules/frontend";
+export { default } from "@preambient-labs/code-rules/frontend";
 ```
 
 ```ts
 // oxfmt.config.ts
-export { default } from "@preambient/code-rules/oxfmt";
+export { default } from "@preambient-labs/code-rules/oxfmt";
 ```
 
-**4. Add the scripts:**
+**3. Add the scripts:**
 
 ```json
 {
@@ -76,20 +66,20 @@ Your editor's Oxc extension reads the same config files, so the editor and CI re
 
 ## 🧩 Presets
 
-| Import                            | Use it for                                                                 |
-| --------------------------------- | -------------------------------------------------------------------------- |
-| `@preambient/code-rules/base`     | Any TypeScript project: correctness, import rules, sorting, spacing, JSDoc |
-| `@preambient/code-rules/frontend` | React apps: base + React, JSX a11y, JSX prop sorting, component ownership  |
-| `@preambient/code-rules/react`    | Alias of `frontend`                                                        |
-| `@preambient/code-rules/backend`  | Node and Bun services: base + Node rules and no `console`                  |
-| `@preambient/code-rules/oxfmt`    | Formatting: 80 columns, double quotes, semicolons, trailing commas         |
+| Import                                 | Use it for                                                                 |
+| -------------------------------------- | -------------------------------------------------------------------------- |
+| `@preambient-labs/code-rules/base`     | Any TypeScript project: correctness, import rules, sorting, spacing, JSDoc |
+| `@preambient-labs/code-rules/frontend` | React apps: base + React, JSX a11y, JSX prop sorting, component ownership  |
+| `@preambient-labs/code-rules/react`    | Alias of `frontend`                                                        |
+| `@preambient-labs/code-rules/backend`  | Node and Bun services: base + Node rules and no `console`                  |
+| `@preambient-labs/code-rules/oxfmt`    | Formatting: 80 columns, double quotes, semicolons, trailing commas         |
 
 <details>
 <summary><b>Preambient monorepo presets</b> (an example of how we compose these)</summary>
 
 <br>
 
-`@preambient/code-rules/oxlint/preambient` and `@preambient/code-rules/oxfmt/preambient`
+`@preambient-labs/code-rules/oxlint/preambient` and `@preambient-labs/code-rules/oxfmt/preambient`
 combine the generic presets by directory, and add shadcn/ui rules, a UI text
 contract, and our generated/vendor exclusions. They also include the
 `preambient-code-rules` CLI, which checks the wrapper files before running the
@@ -147,24 +137,6 @@ export const parseOrigins = (configured: string): Origins => {
 ```
 
 </details>
-
-## 🔐 CI & Docker
-
-Every environment that installs dev dependencies needs read access to the package.
-
-**GitHub Actions:** give the job `permissions: { packages: read }` and pass
-`GH_TOKEN: ${{ github.token }}` to the install step. Repositories outside the
-`preambient` org should use a token with `read:packages` stored as a secret.
-
-**Docker:** pass the token as a BuildKit secret, never as `ARG` or `ENV`:
-
-```dockerfile
-RUN --mount=type=secret,id=GH_TOKEN,required=true \
-    GH_TOKEN="$(cat /run/secrets/GH_TOKEN)" \
-    bun install --frozen-lockfile
-```
-
-Never commit tokens or put them in browser-visible environment variables.
 
 ## 🔁 Upgrading
 
