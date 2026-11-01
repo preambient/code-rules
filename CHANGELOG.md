@@ -9,6 +9,9 @@
   `packages/backend`. The legacy `frontend/**`, `internal/apps/**`, and
   `backend/**` globs no longer match anything special. Other shared packages keep
   the base rules.
+- Publish without npm provenance. npm accepts provenance only from GitHub-hosted
+  runners, and releases run on Namespace runners. 0.12.0 is the first version on
+  npmjs.org; 0.11.0 was never published there.
 - Move the canonical primitive, Storybook document, and stylesheet registries to
   `packages/ui`, and the next-intl suppression exception to
   `packages/i18n/src/frontend/index.ts`.
@@ -44,7 +47,7 @@
 - Remove the Preambient preset's ordering and spacing exemption for GraphQL Code
   Generator outputs.
 - **Breaking:** rename the package to `@preambient-labs/code-rules` and publish it
-  publicly to npmjs.org with provenance. Installs no longer need a registry token or
+  publicly to npmjs.org. Installs no longer need a registry token or
   `.npmrc`. Update `oxlint.config.mts` and `oxfmt.config.mts` wrappers to the new
   name; the CLI rejects the old wrapper contents.
 - License the package under MIT.
