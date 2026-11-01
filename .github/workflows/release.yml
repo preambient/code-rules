@@ -18,7 +18,6 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
-      id-token: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -37,8 +36,9 @@ jobs:
       - run: bun run check
       - run: bash scripts/test-package.sh
       - name: Publish package
-        # Trusted publishing (OIDC) after the first release; NPM_TOKEN only bootstraps it.
-        run: npm publish --ignore-scripts --provenance --access public
+        # npm accepts provenance and trusted (OIDC) publishing only from GitHub-hosted
+        # runners, and releases run on Namespace, so publishing uses NPM_TOKEN.
+        run: npm publish --ignore-scripts --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Verify published package
